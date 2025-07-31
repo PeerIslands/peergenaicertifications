@@ -16,6 +16,7 @@ In this git, participants will submit their code deliverables built as part of h
 •	PRs will be reviewed but not approved and merged into main branch.
 
 **Code Submission**
+
 •	Ensure code follows proper standards based on the technology used.
 
 •	Include unit test cases and test results where applicable.
