@@ -1,0 +1,6 @@
+com/example/restapi/service/UserService.class
+com/example/restapi/model/User.class
+com/example/restapi/controller/UserController.class
+com/example/restapi/config/DataInitializer.class
+com/example/restapi/RestApiApplication.class
+com/example/restapi/repository/UserRepository.class
