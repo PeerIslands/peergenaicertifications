@@ -1,0 +1,31 @@
+# Sample Environment Variables Configuration
+# Copy this file to .env in your project root and update the values
+
+# OpenAI Configuration
+# Get your API key from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=your_openai_api_key_here
+
+# MongoDB Configuration
+# For local MongoDB (default):
+MONGODB_URI=mongodb://localhost:27017/
+
+# For MongoDB Atlas (cloud), use format like:
+# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+
+# Database and Collection Names
+MONGODB_DB_NAME=rag_database
+MONGODB_COLLECTION_NAME=documents
+
+# Optional: Embedding Model Configuration
+# Default model works well, but you can change it if needed
+# EMBEDDING_MODEL=all-MiniLM-L6-v2
+
+# Optional: Document Processing Configuration  
+# CHUNK_SIZE=1000
+# CHUNK_OVERLAP=200
+
+# Instructions:
+# 1. Copy this file to .env: cp sample_env.txt .env
+# 2. Replace 'your_openai_api_key_here' with your actual OpenAI API key
+# 3. Update MongoDB URI if using a different MongoDB instance
+# 4. Optionally customize database/collection names and processing parameters
