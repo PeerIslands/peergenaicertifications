@@ -31,6 +31,9 @@ In this git, participants will submit their code deliverables built as part of h
 
 DocuRAG is a web application that lets users **upload, analyze, and search PDF documents** using AI-powered insights. It uses **Retrieval-Augmented Generation (RAG)** technology to enhance document processing and search.
 
+![RAG](https://github.com/user-attachments/assets/b6a5626e-1414-4cbb-a9f3-feb2ca5d6f0f)
+
+
 * **Frontend:** React 18 + TypeScript
 * **Backend:** Node.js + Express
 * **Database:** MongoDB
