@@ -89,4 +89,19 @@ DocuRAG is a web application that lets users **upload, analyze, and search PDF d
 <img width="790" height="413" alt="image" src="https://github.com/user-attachments/assets/fe0f9d59-ae82-4d4f-a002-48cebb451e33" />
 <img width="838" height="668" alt="image" src="https://github.com/user-attachments/assets/4348a136-458a-4265-a1ae-24f7aadc787e" />
 
+## How to Run 
+Add your credentials:
+MongoDB connection string
+OpenAI API key
+Google OAuth credentials
+
+Install dependencies:
+npm install
+
+Build the project:
+npm run build
+
+Start the application:
+npm run start
+
 
