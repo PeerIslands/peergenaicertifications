@@ -138,7 +138,7 @@ export class MongoDBService {
       const pipeline = [
         {
           $search: {
-            index: "chunk_text_atlas_search", // Assuming you have a default search index
+            index: "chunk_text_atlas_search",
             text: {
               query: query,
               path: "chunk_text", // Search in the chunk_text field

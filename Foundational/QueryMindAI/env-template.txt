@@ -1,0 +1,88 @@
+# QueryMindAI Environment Configuration Template
+# Copy this file to .env and update the values according to your setup
+
+# =============================================================================
+# SERVER CONFIGURATION
+# =============================================================================
+# Port for the server to run on (default: 5000)
+PORT=5000
+
+# Node environment (development, production, test)
+NODE_ENV=development
+
+# =============================================================================
+# AZURE OPENAI CONFIGURATION
+# =============================================================================
+# Azure OpenAI API Key (required for chat functionality)
+AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
+OPENAI_API_KEY=your_azure_openai_api_key_here
+
+# Azure OpenAI Endpoint URL (e.g., https://your-resource.openai.azure.com/)
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+
+# Azure OpenAI Deployment Name (e.g., gpt-4o-mini)
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o-mini
+
+# Azure OpenAI Model Name (default: gpt-4o-mini)
+AZURE_OPENAI_MODEL_NAME=gpt-4o-mini
+
+# Azure OpenAI API Version (default: 2024-07-18)
+AZURE_OPENAI_API_VERSION=2024-07-18
+
+# Temperature for AI responses (0.0 to 1.0, default: 0.5)
+AZURE_OPENAI_TEMPERATURE=0.5
+
+# Maximum tokens for AI responses (default: 500)
+AZURE_OPENAI_MAX_TOKENS=500
+
+# =============================================================================
+# MONGODB CONFIGURATION
+# =============================================================================
+# MongoDB connection URI
+MONGODB_URI=mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/
+
+# MongoDB database name
+MONGODB_DATABASE=query-mind
+
+# MongoDB collection name for knowledge base
+MONGODB_COLLECTION=knowledge-base
+
+# =============================================================================
+# OLLAMA CONFIGURATION
+# =============================================================================
+# Ollama base URL for embeddings (default: http://localhost:11434)
+OLLAMA_BASE_URL=http://localhost:11434
+
+# =============================================================================
+# DATABASE CONFIGURATION (PostgreSQL for Drizzle)
+# =============================================================================
+# PostgreSQL database URL for Drizzle ORM
+DATABASE_URL=postgresql://username:password@localhost:5432/querymind_db
+
+# =============================================================================
+# DEVELOPMENT CONFIGURATION
+# =============================================================================
+# Replit ID (if running on Replit)
+REPL_ID=
+
+# =============================================================================
+# OPTIONAL CONFIGURATIONS
+# =============================================================================
+# Session secret for Express sessions (generate a random string)
+SESSION_SECRET=your_session_secret_here
+
+# CORS origins (comma-separated list of allowed origins)
+CORS_ORIGINS=http://localhost:3000,http://localhost:5000
+
+# Log level (error, warn, info, debug)
+LOG_LEVEL=info
+
+# =============================================================================
+# NOTES
+# =============================================================================
+# 1. Copy this file to .env: cp env-template.txt .env
+# 2. Replace all placeholder values with your actual configuration
+# 3. Never commit .env to version control (add .env to .gitignore)
+# 4. For production, use environment-specific values
+# 5. Ensure all required services (MongoDB, Ollama, Azure OpenAI) are accessible
+# 6. Test your configuration using the test-rag.ts script

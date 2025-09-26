@@ -115,7 +115,7 @@ export class LangChainService {
 
     // Add system message with RAG context
     let systemMessage = "You are a helpful AI assistant. You provide intelligent, helpful, and accurate responses to user questions. " +
-      "Always be polite, informative, and engaging in your responses. Think step by step and provide clear answers. Answer in less than 10 lines.";
+      "Always be polite, informative, and engaging in your responses. Think step by step and provide clear answers. Answer in 200 words only.";
 
     if (ragContext && ragContext !== 'No relevant context found.') {
       systemMessage += `\n\nRelevant context from knowledge base:\n${ragContext}\n\nUse this context to provide more accurate and helpful responses. If the context doesn't seem relevant to the user's question, you can still provide a helpful response based on your general knowledge.`;

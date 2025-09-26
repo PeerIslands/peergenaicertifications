@@ -91,8 +91,7 @@ npx tsx server/test-rag.ts
 
 ## Prerequisites
 
-1. **Ollama running** with these models:
-   - `deepseek-r1:8b` (for chat)
+1. **Ollama running** with this model:
    - `embeddinggemma` (for embeddings)
 
 2. **MongoDB Atlas** with documents containing:
