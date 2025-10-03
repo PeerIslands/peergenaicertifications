@@ -1,0 +1,17 @@
+__pycache__/
+.pytest_cache/
+.venv/
+env/
+venv/
+dist/
+build/
+node_modules/
+.DS_Store
+.env
+data/
+reports/
+*.log
+*.sqlite3
+*.db
+chromadb/
+

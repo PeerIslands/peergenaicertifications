@@ -1,27 +1,36 @@
-# PeerGenAI Certifications
-Repository for submitting the code deliverables as part of hands-on exercises in Peer GenAI Certifications
+## React + FastAPI Production-Ready Setup
 
-**Overview**
+### Prerequisites
+- Python 3.10+
+- Node 18+
+- Ollama running locally with models defined in `.env` or defaults
 
-In this git, participants will submit their code deliverables built as part of hands-on exercises in Peer GenAI Certifications. Users can create branches with their names from main, push their code and raise PRs. PRs will be reviewed but not approved. See below for details.
+### Backend (FastAPI)
+1. Create a venv and install deps:
+   - `python -m venv .venv && . .venv/Scripts/Activate.ps1`
+   - `pip install -r requirements.txt`
+2. Run dev server:
+   - `./scripts/run_backend.ps1`
+3. API Endpoints:
+   - `GET /health` → status
+   - `POST /query` → body: `{ "query": "..." }`
 
-**Branch Creation**
+### Frontend (React + Vite)
+1. `cd frontend`
+2. `npm install`
+3. Create `.env` with `VITE_API_BASE=http://127.0.0.1:8000`
+4. `npm run dev`
 
-•	Participants can create branches with their full name. For example, if your name is John Doe, you can create branch name as /johndoe
+### Tests
+- `pytest`
 
-•	Participants submit their code inside this branch. 
+### Project Structure
+- Backend API: `src/api/main.py`
+- RAG System: `src/rag/system.py`
+- Frontend: `frontend/`
 
-•	Participants should raise PR to indicate their submission. Only one PR will be allowed per person for submission.
-
-•	PRs will be reviewed but not approved and merged into main branch.
-
-**Code Submission**
-
-•	Ensure code follows proper standards based on the technology used.
-
-•	Include unit test cases and test results where applicable.
-
-•	Code should follow proper structure for folders such as common, frontend, backend etc and files such as readme, build and deployment scripts.
-
-•	Readme should include instructions on how to build and run the code locally including any dependencies.
+### Production Notes
+- Enable proper CORS allowlist in `src/api/main.py`
+- Run with `uvicorn` or `gunicorn` behind a reverse proxy
+- Consider Dockerizing backend and frontend for deployment
 
