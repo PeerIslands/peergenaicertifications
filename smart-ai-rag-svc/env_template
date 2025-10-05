@@ -1,0 +1,20 @@
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DATABASE=rag_database
+MONGODB_COLLECTION=documents
+
+# Application Configuration
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
+EMBEDDING_MODEL=text-embedding-ada-002
+LLM_MODEL=gpt-3.5-turbo
+TEMPERATURE=0.7
+MAX_TOKENS=1000
+
+# Vector Search Configuration
+VECTOR_INDEX_NAME=vector_index
+SIMILARITY_THRESHOLD=0.7
+TOP_K_RESULTS=5
