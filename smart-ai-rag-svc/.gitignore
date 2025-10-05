@@ -80,9 +80,11 @@ coverage.xml
 test_documents/
 sample_pdfs/
 
-# Model files
-models/
+# Model files (ML models, not source code)
 *.pkl
 *.joblib
+*.h5
+*.pt
+*.pth
 
 
