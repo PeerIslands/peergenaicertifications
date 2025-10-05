@@ -38,7 +38,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 2. Configure environment
-cp env_template .env
+cp .env.example .env
 # Edit .env with your OPENAI_API_KEY and MONGODB_URI
 
 # 3. Setup MongoDB index
@@ -70,13 +70,13 @@ curl -X POST "http://localhost:8000/questions/ask?use_llamaindex=true" \
 ### Step-by-Step Installation
 
 #### 1. Clone the repository
-   ```bash
-   git clone <repository-url>
+```bash
+git clone <repository-url>
 cd smart-ai-rag-svc
-   ```
+```
 
 #### 2. Create a virtual environment
-   ```bash
+```bash
 # Create virtual environment
 python3 -m venv venv
 
@@ -87,26 +87,26 @@ venv\Scripts\activate  # On Windows
 ```
 
 #### 3. Install dependencies
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
 #### 4. Set up environment variables
-   ```bash
-   cp env_template .env
-   ```
-   
-   Edit `.env` file with your configuration:
-   ```env
-   # OpenAI Configuration
+```bash
+cp .env.example .env
+```
+
+Edit `.env` file with your configuration:
+```env
+# OpenAI Configuration
 OPENAI_API_KEY=sk-your-openai-api-key-here
 OPENAI_EMBEDDING_MODEL=text-embedding-ada-002
 OPENAI_LLM_MODEL=gpt-3.5-turbo
-   
+
 # MongoDB Configuration (MongoDB Atlas)
-   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
-   MONGODB_DATABASE=rag_database
-   MONGODB_COLLECTION=documents
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+MONGODB_DATABASE=rag_database
+MONGODB_COLLECTION=documents
 MONGODB_VECTOR_INDEX=vector_index
 
 # RAG Configuration
