@@ -105,6 +105,4 @@ Build the project:
 npm run build
 
 Start the application:
-npm run start
-
-
+npm run dev & npm run start
