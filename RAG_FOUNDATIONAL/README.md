@@ -172,7 +172,7 @@ server/src/
    - `server/src/` split into `config/`, `db/`, `routes/`, `services/`, `utils/`, with `app.ts` and `server.ts` entrypoints.
 
 6. Performance trade‑offs
-   - Tunables for chunking, batch size, top‑k, and fallbacks via `RAG_*` envs; retries with backoff on 429.
+   - Tunables for chunking, batch size, top‑k, and fallbacks via `RAG_*` envs; retries with backoff
 
 ## How to Run 
 Add your credentials:
