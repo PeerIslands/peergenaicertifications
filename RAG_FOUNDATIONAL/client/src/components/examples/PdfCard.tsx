@@ -1,4 +1,5 @@
 import { PdfCard } from '../pdf-card'
+import { clientLogger } from "@/lib/logger";
 import type { Pdf } from "@shared/schema"
 
 const mockPdf: Pdf = {
@@ -19,8 +20,8 @@ export default function PdfCardExample() {
   return (
     <PdfCard 
       pdf={mockPdf}
-      onDelete={(id) => console.log('Delete:', id)}
-      onDownload={(id) => console.log('Download:', id)}
+      onDelete={(id) => clientLogger.info('Delete', { id })}
+      onDownload={(id) => clientLogger.info('Download', { id })}
     />
   )
 }

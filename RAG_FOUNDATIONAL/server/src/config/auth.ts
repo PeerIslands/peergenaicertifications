@@ -4,12 +4,10 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import type { Express, RequestHandler } from "express";
 import { Strategy as GoogleStrategy, type Profile, type VerifyCallback } from "passport-google-oauth20";
-import { storage } from "./storage";
-
-// Google OAuth 2.0 configuration using passport-google-oauth20
+import { storage } from "../services/storage";
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000;
   const isHttps = (process.env.APP_BASE_URL || "").startsWith("https://");
   const sessionStore = MongoStore.create({
     mongoUrl: process.env.DATABASE_URL!,
@@ -95,7 +93,6 @@ export async function setupAuth(app: Express) {
     "/api/callback",
     passport.authenticate("google", { failureRedirect: "/api/login" }),
     (req, res) => {
-      // After successful login, ensure the session is saved before redirecting
       req.session.save(() => {
         res.redirect("/");
       });
@@ -135,3 +132,5 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   }
   return next();
 };
+
+

@@ -92,6 +92,88 @@ DocuRAG is a web application that lets users **upload, analyze, and search PDF d
 <img width="790" height="413" alt="image" src="https://github.com/user-attachments/assets/fe0f9d59-ae82-4d4f-a002-48cebb451e33" />
 <img width="838" height="668" alt="image" src="https://github.com/user-attachments/assets/4348a136-458a-4265-a1ae-24f7aadc787e" />
 
+## Better logging
+
+- Server uses pino for structured logs: pretty in development, compact JSON in production.
+- Client uses loglevel with INFO default in production and DEBUG in development.
+- Configure verbosity:
+  - Set `LOG_LEVEL=debug` for server (e.g., in `.env`).
+  - Set `VITE_LOG_LEVEL=debug` for client (Vite reloads it in dev).
+- Where logs are emitted:
+  - Server startup and listening port
+  - RAG pipeline: indexing start/end, retrieval path, candidate/selected counts, model used, and answer size
+  - Warnings on retries for rate limits (429) and fallback paths
+
+How to view logs
+- Development (pretty): `npm run dev` → terminal output
+- Production (JSON): `npm start` → terminal JSON lines
+- Browser client logs: open DevTools Console
+
+## Production-grade project structure
+### MongoDB vector search pre-filtering
+
+- We pre-filter inside `$vectorSearch` using `filter: { userId }` to reduce candidate sets before scoring.
+- This lowers latency and avoids post-filtering large result sets.
+
+Example pipeline snippet:
+
+```json
+[
+  {
+    "$vectorSearch": {
+      "index": "vector_index",
+      "path": "embedding",
+      "queryVector": "<queryEmbedding>",
+      "numCandidates": 200,
+      "limit": 20,
+      "filter": { "userId": "<currentUserId>" }
+    }
+  },
+  { "$project": { "userId": 1, "pdfId": 1, "originalName": 1, "index": 1, "text": 1, "embedding": 1, "score": { "$meta": "vectorSearchScore" } } }
+]
+```
+
+### MongoDB design principles
+
+- **Don’t save entire file content in MongoDB**: store only a short preview (truncated `extractedText`) in `pdfs`. Full content is chunked and stored as multiple small documents in the `vectors` collection.
+- **16MB document limit**: enforced by truncating preview text (via `RAG_EXTRACTED_TEXT_MAX_CHARS`) and keeping vector chunks small. This prevents documents approaching the 16MB cap.
+- **Indexes**: ensure indexes on `users`, `pdfs` (e.g., `userId`, `uploadedAt`, text index), and composite indexes in `vectors` (`userId`, `pdfId`, `index`).
+
+Server side is organized for clarity and maintainability, avoiding unnecessary middleware:
+
+```
+server/src/
+ config/ # Environment-bound setup (auth, vite)
+ db/ # Database connections (mongo)
+ routes/ # Express routes
+ services/ # Business/domain logic (rag, storage)
+ utils/ # Reusable utilities (logger)
+ app.ts # Express app factory + error handler
+ server.ts # Entrypoint (boot + listen)
+```
+
+## Points to Consider (what this repo demonstrates)
+
+1. LangChain
+   - a) PDFLoader is available and used (`@langchain/community/document_loaders/fs/pdf`) in `server/src/routes/http-routes.ts`.
+   - b) Vector store is available and used (`MongoDBAtlasVectorSearch`) in `server/src/services/rag.ts`.
+
+2. MongoDB design principles
+   - a) Don’t save entire file content in MongoDB; only a preview is stored in `pdfs`, while full text is chunked into `vectors`.
+   - b) 16MB document limit respected by truncation (`RAG_EXTRACTED_TEXT_MAX_CHARS`) and small chunk docs.
+
+3. Vector search pre‑filtering
+   - Pre‑filter in `$vectorSearch` with `{ userId }` or `{ userId, pdfId }`, and apply the same filters in local/full‑text fallbacks.
+
+4. Better logging
+   - Pino for structured server logs; loglevel on client. Object‑first logging used throughout.
+
+5. Production‑grade structure
+   - `server/src/` split into `config/`, `db/`, `routes/`, `services/`, `utils/`, with `app.ts` and `server.ts` entrypoints.
+
+6. Performance trade‑offs
+   - Tunables for chunking, batch size, top‑k, and fallbacks via `RAG_*` envs; retries with backoff on 429.
+
 ## How to Run 
 Add your credentials:
 MongoDB connection string

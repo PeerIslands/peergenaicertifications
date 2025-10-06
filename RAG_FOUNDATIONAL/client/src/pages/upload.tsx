@@ -5,6 +5,7 @@ import { UploadZone } from "@/components/upload-zone"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { clientLogger } from "@/lib/logger";
 import { FileText, Zap, Search, Shield, CheckCircle } from "lucide-react"
 import { api } from "@/lib/api"
 
@@ -40,7 +41,7 @@ export default function Upload() {
         await uploadMutation.mutateAsync(file)
       } catch (error) {
         // Error handling is done in the mutation
-        console.error("Upload error:", error)
+        clientLogger.error("Upload error", error)
       }
     }
   }

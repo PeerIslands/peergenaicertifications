@@ -1,17 +1,10 @@
 import { type User, type UpsertUser, type Pdf, type InsertPdf } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { getDb } from "./mongo";
-
-// modify the interface with any CRUD methods
-// you might need
+import { getDb } from "../db/mongo";
 
 export interface IStorage {
-  // User methods
-  // (IMPORTANT) these user operations are mandatory for Replit Auth.
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
-  // PDF methods
   getPdfs(userId: string): Promise<Pdf[]>;
   getPdf(id: string): Promise<Pdf | undefined>;
   createPdf(pdf: InsertPdf): Promise<Pdf>;
@@ -21,7 +14,6 @@ export interface IStorage {
 }
 
 export class MongoStorage implements IStorage {
-  // User methods
   async getUser(id: string): Promise<User | undefined> {
     const db = await getDb();
     const doc = await db.collection("users").findOne({ id });
@@ -35,11 +27,11 @@ export class MongoStorage implements IStorage {
     const existing = await db.collection("users").findOne({ id });
     const user: User = {
       id,
-      email: userData.email ?? existing?.email,
-      firstName: userData.firstName ?? existing?.firstName,
-      lastName: userData.lastName ?? existing?.lastName,
-      profileImageUrl: userData.profileImageUrl ?? existing?.profileImageUrl,
-      createdAt: existing?.createdAt ?? now,
+      email: userData.email ?? (existing as any)?.email,
+      firstName: userData.firstName ?? (existing as any)?.firstName,
+      lastName: userData.lastName ?? (existing as any)?.lastName,
+      profileImageUrl: userData.profileImageUrl ?? (existing as any)?.profileImageUrl,
+      createdAt: (existing as any)?.createdAt ?? now,
       updatedAt: now,
     } as User;
     await db.collection("users").updateOne(
@@ -50,7 +42,6 @@ export class MongoStorage implements IStorage {
     return user;
   }
 
-  // PDF methods
   async getPdfs(userId: string): Promise<Pdf[]> {
     const db = await getDb();
     const docs = await db.collection("pdfs").find({ userId }).sort({ uploadedAt: -1 }).toArray();
@@ -112,3 +103,5 @@ export class MongoStorage implements IStorage {
 }
 
 export const storage = new MongoStorage();
+
+
