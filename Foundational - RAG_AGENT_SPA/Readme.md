@@ -1,10 +1,10 @@
-                                Contributed By
+                                            Contributed By
 **Mahendra Achari**
                               - GitHub: [@mahee37](https://github.com/mahee37)
                               - Email: mahendraachari37@gmail.com
                               - LinkedIn: [Vendithulla Mahendra Achari](https://linkedin.com/in/mahendra-achari-a28678211)
 
-                              *Built with ❤️ by [@mahee37                                                            (https://github.com/mahee37)* 
+                               *Built with ❤️ by [@mahee37            (https://github.com/mahee37)* 
 
 ## 📚 **Complete Updated README.md**
 
