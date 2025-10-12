@@ -36,7 +36,7 @@ export function HomePage() {
   }, [documents, selectedDocument]);
 
   const handleFileSelect = async (file: File) => {
-    console.log('Uploading file:', file.name);
+    //console.log('Uploading file:', file.name);
     setIsUploading(true);
     
     try {
@@ -54,7 +54,7 @@ export function HomePage() {
       }
 
       const result = await response.json();
-      console.log('Upload successful:', result);
+      //console.log('Upload successful:', result);
 
       // Refresh documents list
       await queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
@@ -88,7 +88,7 @@ export function HomePage() {
   const handleDocumentSelect = (document: DocumentSummary) => {
     setSelectedDocument(document);
     setMessages([]); // Clear messages when switching documents
-    console.log('Document selected:', document.filename);
+    // console.log('Document selected:', document.filename);
   };
 
   const handleDeleteDocument = async (document: DocumentSummary) => {
@@ -127,7 +127,7 @@ export function HomePage() {
   const handleSendMessage = async (message: string) => {
     if (!selectedDocument) return;
 
-    console.log('Sending message:', message);
+    // console.log('Sending message:', message);
     
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -166,7 +166,7 @@ export function HomePage() {
       };
       
       setMessages(prev => [...prev, aiMessage]);
-      console.log('Answer received successfully');
+      // console.log('Answer received successfully');
     } catch (error) {
       console.error('Question processing error:', error);
       
@@ -229,7 +229,7 @@ export function HomePage() {
           </div>
 
           {/* Right Panel - Chat */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 h-full">
             {selectedDocument ? (
               <ChatInterface
                 documentName={selectedDocument.filename}

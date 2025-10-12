@@ -30,7 +30,7 @@ export class FileProcessor {
   private static async extractFromPDF(filePath: string): Promise<string> {
 
     try {
-      console.log("Trying to extract PDF from:", filePath);
+      // console.log("Trying to extract PDF from:", filePath);
       if (!fs.existsSync(filePath)) {
         throw new Error("File does not exist: " + filePath);
       }

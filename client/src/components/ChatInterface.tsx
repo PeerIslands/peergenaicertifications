@@ -62,9 +62,9 @@ export function ChatInterface({
 
       <CardContent className="flex-1 flex flex-col gap-4 p-0">
         {/* Messages */}
-        <div className="flex-1 px-6 overflow-y-auto max-h-96">
+        <div className="flex-1 px-6 overflow-y-auto min-h-0">
           {messages.length === 0 ? (
-            <div className="flex items-center justify-center h-32 text-center">
+            <div className="flex items-center justify-center h-full text-center">
               <div className="space-y-2">
                 <Bot className="w-8 h-8 text-muted-foreground mx-auto" />
                 <p className="text-muted-foreground">
