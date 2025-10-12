@@ -1,0 +1,38 @@
+<div class="upload-container">
+  <div 
+    class="drop-zone" 
+    [class.dragging]="isDragging"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)">
+    
+    <mat-icon class="upload-icon">cloud_upload</mat-icon>
+    <h3>Drag & Drop Files Here</h3>
+    <p>or</p>
+    <input 
+      type="file" 
+      #fileInput 
+      (change)="onFileSelected($event)" 
+      multiple
+      accept=".pdf,.docx,.xlsx,.txt,.csv,.md"
+      style="display: none">
+    <button mat-raised-button color="primary" (click)="fileInput.click()">
+      <mat-icon>folder_open</mat-icon>
+      Select Files
+    </button>
+    
+    <p class="file-types">Supported: PDF, DOCX, XLSX, TXT, CSV, MD</p>
+  </div>
+  
+  <mat-progress-bar *ngIf="isUploading" mode="indeterminate"></mat-progress-bar>
+  
+  <div class="uploaded-files" *ngIf="uploadedFiles.length > 0">
+    <h4>Uploaded Documents:</h4>
+    <div class="file-list">
+      <div class="file-item" *ngFor="let file of uploadedFiles">
+        <mat-icon>description</mat-icon>
+        <span>{{ file }}</span>
+      </div>
+    </div>
+  </div>
+</div>
