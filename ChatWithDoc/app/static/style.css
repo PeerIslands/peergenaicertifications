@@ -1,0 +1,16 @@
+body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: #0b1020; color: #e8eefc; }
+.container { max-width: 900px; margin: 0 auto; padding: 24px; }
+h1 { margin: 0 0 16px; }
+section { background: #141b34; padding: 16px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #263055; }
+input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #31406b; background: #0e142a; color: #e8eefc; }
+select, button, input[type="file"] { padding: 10px; border-radius: 6px; border: 1px solid #31406b; background: #0e142a; color: #e8eefc; }
+button { cursor: pointer; }
+.query-row { display: grid; grid-template-columns: 1fr 180px 120px; gap: 8px; }
+ul { list-style: none; padding-left: 0; }
+li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #263055; }
+.status { margin-top: 8px; color: #a8c3ff; }
+.answer { margin-top: 12px; white-space: pre-wrap; background: #0e142a; padding: 12px; border-radius: 6px; border: 1px solid #31406b; }
+.sources { margin-top: 8px; color: #a8c3ff; font-size: 14px; }
+.samples { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+.samples .sample { background: #1a2447; border-color: #31406b; }
+

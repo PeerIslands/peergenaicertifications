@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ChatWithDoc</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>ChatWithDoc</h1>
+
+      <section class="upload">
+        <h2>Upload PDFs</h2>
+        <input id="file-input" type="file" accept="application/pdf" multiple />
+        <button id="upload-btn">Upload</button>
+        <div id="upload-status" class="status"></div>
+      </section>
+
+      <section class="pdf-list">
+        <h2>Uploaded PDFs</h2>
+        <ul id="pdfs"></ul>
+      </section>
+
+      <section class="query">
+        <h2>Ask a question</h2>
+        <div class="query-row">
+          <input id="question" type="text" placeholder="Type your question about the uploaded PDFs..." />
+          <button id="ask-btn">Ask</button>
+        </div>
+        <div id="answer" class="answer"></div>
+        <div id="sources" class="sources"></div>
+      </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+  </html>
+
+
