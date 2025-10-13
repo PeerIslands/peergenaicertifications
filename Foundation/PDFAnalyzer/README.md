@@ -155,7 +155,8 @@ python main.py --use-azure-openai
 
 ### Environment Configuration
 
-The application uses `env.txt` for configuration. This file contains all the necessary environment variables:
+The application uses `env.txt` for configuration. Create env.txt file by referring the below keys/the keys from env-sample.txt.
+This file contains all the necessary environment variables:
 
 ```bash
 # MongoDB Configuration
@@ -202,7 +203,7 @@ export AZURE_EMBEDDING_DEPLOYMENT_NAME="text-embedding-ada-002"
 ```
 Data Ingestion/
 ├── PDF/                          # PDF files to process
-│   └── 1 Generative Adversarial Nets.pdf
+│   └── 1 Generative Adversarial Nets.pdf.. etc
 ├── main.py                       # Main execution script
 ├── run.py                        # Script to run main.py with env.txt configuration
 ├── env.txt                       # Environment configuration file
