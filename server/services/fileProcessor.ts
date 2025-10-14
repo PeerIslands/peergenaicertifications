@@ -1,26 +1,33 @@
-import mammoth from 'mammoth';
-import fs from 'fs';
-import pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import mammoth from "mammoth";
+import fs from "fs";
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 
 export class FileProcessor {
   /**
    * Extract text content from uploaded file based on its MIME type
    */
-  static async extractText(filePath: string, mimeType: string): Promise<string> {
+  static async extractText(
+    filePath: string,
+    mimeType: string
+  ): Promise<string> {
     try {
       switch (mimeType) {
-        case 'application/pdf':
+        case "application/pdf":
           return await this.extractFromPDF(filePath);
-        case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
           return await this.extractFromDocx(filePath);
-        case 'text/plain':
+        case "text/plain":
           return await this.extractFromTxt(filePath);
         default:
           throw new Error(`Unsupported file type: ${mimeType}`);
       }
     } catch (error) {
-      console.error('Error extracting text from file:', error);
-      throw new Error(`Failed to extract text from file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Error extracting text from file:", error);
+      throw new Error(
+        `Failed to extract text from file: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   }
 
@@ -28,7 +35,6 @@ export class FileProcessor {
    * Extract text from PDF file
    */
   private static async extractFromPDF(filePath: string): Promise<string> {
-
     try {
       // console.log("Trying to extract PDF from:", filePath);
       if (!fs.existsSync(filePath)) {
@@ -40,7 +46,9 @@ export class FileProcessor {
       console.log("filePath:", filePath);
       const pdfData = await pdfParse(dataBuffer);
       if (!pdfData.text.trim()) {
-        throw new Error("PDF has no extractable text (possibly scanned images).");
+        throw new Error(
+          "PDF has no extractable text (possibly scanned images)."
+        );
       }
       return pdfData.text;
     } catch (err: any) {
@@ -61,7 +69,7 @@ export class FileProcessor {
    * Extract text from TXT file
    */
   private static async extractFromTxt(filePath: string): Promise<string> {
-    return fs.readFileSync(filePath, 'utf8');
+    return fs.readFileSync(filePath, "utf8");
   }
 
   /**
@@ -69,9 +77,9 @@ export class FileProcessor {
    */
   static isValidFileType(mimeType: string): boolean {
     const allowedTypes = [
-      'application/pdf',
-      'text/plain',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      "application/pdf",
+      "text/plain",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
     return allowedTypes.includes(mimeType);
   }
@@ -81,11 +89,12 @@ export class FileProcessor {
    */
   static getFileExtension(mimeType: string): string {
     const extensions: Record<string, string> = {
-      'application/pdf': '.pdf',
-      'text/plain': '.txt',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx'
+      "application/pdf": ".pdf",
+      "text/plain": ".txt",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        ".docx",
     };
-    return extensions[mimeType] || '';
+    return extensions[mimeType] || "";
   }
 
   /**
@@ -97,7 +106,7 @@ export class FileProcessor {
         fs.unlinkSync(filePath);
       }
     } catch (error) {
-      console.error('Error cleaning up file:', error);
+      console.error("Error cleaning up file:", error);
     }
   }
 }

@@ -11,6 +11,7 @@ import type { DocumentSummary, ChatMessage } from '@shared/schema';
 
 export function HomePage() {
   const [selectedDocument, setSelectedDocument] = useState<DocumentSummary | null>(null);
+  const [globalMode, setGlobalMode] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
@@ -28,12 +29,12 @@ export function HomePage() {
     },
   });
 
-  // Select first document when documents load
+  // Select first document when documents load (only when not in global mode)
   useEffect(() => {
-    if (documents.length > 0 && !selectedDocument) {
+    if (!globalMode && documents.length > 0 && !selectedDocument) {
       setSelectedDocument(documents[0]);
     }
-  }, [documents, selectedDocument]);
+  }, [documents, selectedDocument, globalMode]);
 
   const handleFileSelect = async (file: File) => {
     //console.log('Uploading file:', file.name);
@@ -86,6 +87,7 @@ export function HomePage() {
   };
 
   const handleDocumentSelect = (document: DocumentSummary) => {
+    setGlobalMode(false);
     setSelectedDocument(document);
     setMessages([]); // Clear messages when switching documents
     // console.log('Document selected:', document.filename);
@@ -125,7 +127,7 @@ export function HomePage() {
   };
 
   const handleSendMessage = async (message: string) => {
-    if (!selectedDocument) return;
+    if (!globalMode && !selectedDocument) return;
 
     // console.log('Sending message:', message);
     
@@ -140,15 +142,18 @@ export function HomePage() {
     setIsChatLoading(true);
     
     try {
-      const response = await fetch('/api/ask', {
+      const isGlobal = globalMode;
+      const url = isGlobal ? '/api/ask-global' : '/api/ask';
+      const body = isGlobal
+        ? { question: message }
+        : { documentId: selectedDocument!.id, question: message };
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          documentId: selectedDocument.id,
-          question: message,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!response.ok) {
@@ -213,26 +218,45 @@ export function HomePage() {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
           {/* Left Panel - Upload & Documents */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-6 flex flex-col h-full min-h-0">
             <FileUploadZone 
               onFileSelect={handleFileSelect}
               isUploading={isUploading}
             />
-            
-            <DocumentList
-              documents={documents}
-              selectedDocumentId={selectedDocument?.id}
-              onDocumentSelect={handleDocumentSelect}
-              isLoading={documentsLoading}
-              onDeleteDocument={handleDeleteDocument}
-            />
+            <div className="flex-1 min-h-0">
+              <DocumentList
+                documents={documents}
+                selectedDocumentId={selectedDocument?.id}
+                onDocumentSelect={handleDocumentSelect}
+                isLoading={documentsLoading}
+                onDeleteDocument={handleDeleteDocument}
+              />
+            </div>
           </div>
 
           {/* Right Panel - Chat */}
           <div className="lg:col-span-2 h-full">
-            {selectedDocument ? (
+            {/* Mode switch */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm text-muted-foreground">
+                {globalMode ? 'Asking across all documents' : selectedDocument ? `Asking about: ${selectedDocument.filename}` : 'Select a document or switch to global mode'}
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={globalMode}
+                  onChange={(e) => {
+                    setGlobalMode(e.target.checked);
+                    setMessages([]);
+                  }}
+                />
+                Ask across all documents
+              </label>
+            </div>
+
+            {globalMode || selectedDocument ? (
               <ChatInterface
-                documentName={selectedDocument.filename}
+                documentName={globalMode ? undefined : selectedDocument?.filename}
                 messages={messages}
                 onSendMessage={handleSendMessage}
                 isLoading={isChatLoading}

@@ -12,10 +12,13 @@ function getPositiveInt(value: string | undefined, fallback: number): number {
 }
 
 const DEFAULT_CHUNK_SIZE = getPositiveInt(process.env.CHUNK_SIZE, 1200);
-const DEFAULT_CHUNK_OVERLAP_RAW = getPositiveInt(process.env.CHUNK_OVERLAP, 200);
+const DEFAULT_CHUNK_OVERLAP_RAW = getPositiveInt(
+  process.env.CHUNK_OVERLAP,
+  200
+);
 const DEFAULT_CHUNK_OVERLAP = Math.min(
   DEFAULT_CHUNK_OVERLAP_RAW,
-  Math.floor(DEFAULT_CHUNK_SIZE / 2),
+  Math.floor(DEFAULT_CHUNK_SIZE / 2)
 );
 
 /**
@@ -24,9 +27,9 @@ const DEFAULT_CHUNK_OVERLAP = Math.min(
 export function chunkText(
   text: string,
   chunkSize: number = DEFAULT_CHUNK_SIZE,
-  chunkOverlap: number = DEFAULT_CHUNK_OVERLAP,
+  chunkOverlap: number = DEFAULT_CHUNK_OVERLAP
 ): string[] {
-  const normalized = text.replace(/\r\n/g, '\n').trim();
+  const normalized = text.replace(/\r\n/g, "\n").trim();
   if (!normalized) {
     return [];
   }
@@ -43,16 +46,18 @@ export function chunkText(
     if (end < normalized.length) {
       const window = chunk;
       const breakPoints = [
-        window.lastIndexOf('\n\n'),
-        window.lastIndexOf('\n'),
-        window.lastIndexOf('. '),
-        window.lastIndexOf('? '),
-        window.lastIndexOf('! '),
-        window.lastIndexOf(' ')
+        window.lastIndexOf("\n\n"),
+        window.lastIndexOf("\n"),
+        window.lastIndexOf(". "),
+        window.lastIndexOf("? "),
+        window.lastIndexOf("! "),
+        window.lastIndexOf(" "),
       ];
 
       const preferredBreak = breakPoints
-        .filter(index => index !== -1 && index > Math.floor(window.length * 0.6))
+        .filter(
+          (index) => index !== -1 && index > Math.floor(window.length * 0.6)
+        )
         .sort((a, b) => b - a)[0];
 
       if (preferredBreak !== undefined) {

@@ -64,7 +64,7 @@ export function DocumentList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 h-full flex flex-col">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium">Documents</h3>
         <Badge variant="secondary" data-testid="text-document-count">
@@ -72,7 +72,7 @@ export function DocumentList({
         </Badge>
       </div>
       
-      <div className="space-y-2 max-h-96 overflow-y-auto">
+      <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
         {documents.map((document) => (
           <Card
             key={document.id}

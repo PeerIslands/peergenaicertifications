@@ -68,10 +68,10 @@ export function ChatInterface({
               <div className="space-y-2">
                 <Bot className="w-8 h-8 text-muted-foreground mx-auto" />
                 <p className="text-muted-foreground">
-                  Ask me anything about the document
+                  {documentName ? 'Ask me anything about the document' : 'Ask me anything across all documents'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  I'll help you understand its content
+                  {documentName ? "I'll help you understand its content" : "I'll retrieve from all ingested content"}
                 </p>
               </div>
             </div>
@@ -145,7 +145,7 @@ export function ChatInterface({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask a question about the document..."
+              placeholder={documentName ? 'Ask a question about the document...' : 'Ask a question across all documents...'}
               disabled={isLoading}
               data-testid="input-chat-message"
               className="flex-1"

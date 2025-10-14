@@ -53,6 +53,13 @@ Key runtime libraries include Express, React 18, Vite, the official MongoDB driv
 - Ensure the required environment variables are in place before running any script.
 - Verify that the MongoDB connection string allows connections from your development machine.
 
-## Notes
+## API
 
-- Current Q&A uses the full document content. Embeddings are generated and stored for future retrieval, but vector search is not yet wired into the answer flow.
+- POST `/api/upload` – Upload a document. Extracts text, chunks, embeds, and stores vectors.
+- GET `/api/documents` – List uploaded documents (metadata only).
+- GET `/api/documents/:id` – Fetch a specific document.
+- DELETE `/api/documents/:id` – Delete a document and its vectors.
+- POST `/api/ask` – Ask a question about a document using RAG (LangChain). Body: `{ documentId, question }`. Returns `{ answer, documentName, sources }`.
+- POST `/api/ask-global` – Cross-document RAG. Body: `{ question, docIds?: string[], topK?: number }`. Returns `{ answer, sources: [{ docId, chunkIndex, score }] }`.
+- POST `/api/summarize/:id` – Generate a brief summary of a document.
+
