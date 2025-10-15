@@ -1,4 +1,4 @@
-# Foundational RAG
+# Document Q&A
 
 Document QA app with a TypeScript Express API and a Vite-powered React client. The server manages file ingestion, AI requests, and serves the bundled client in production.
 
