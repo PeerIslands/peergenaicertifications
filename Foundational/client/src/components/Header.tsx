@@ -10,7 +10,7 @@ export default function Header() {
               <Brain className="text-white w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">RAG Intelligence</h1>
+              <h1 className="text-xl font-semibold text-foreground">RAG PeerIslands AI Foundational</h1>
               <p className="text-xs text-secondary">Document Search & Analysis</p>
             </div>
           </div>

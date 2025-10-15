@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
-import { getMongoStorage } from "./mongodb-storage";
+import { getSupabaseStorage } from "./supabase-storage";
 import { processPDFDocument, performRAGSearch } from "./services/ragService";
-import { insertMongoDocumentSchema } from "@shared/mongodb-schema";
+import { insertSupabaseDocumentSchema } from "@shared/supabase-schema";
 
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all documents
   app.get("/api/documents", async (req, res) => {
     try {
-      const storage = await getMongoStorage();
+      const storage = await getSupabaseStorage();
       const documents = await storage.getAllDocuments();
       res.json(documents);
     } catch (error) {
@@ -39,14 +39,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No PDF file provided" });
       }
 
-      const storage = await getMongoStorage();
+      const storage = await getSupabaseStorage();
       const documentData = {
         name: req.file.originalname,
         size: req.file.size,
         status: "uploading" as const,
       };
 
-      const validatedData = insertMongoDocumentSchema.parse(documentData);
+      const validatedData = insertSupabaseDocumentSchema.parse(documentData);
       const document = await storage.createDocument(validatedData);
 
       // Process PDF asynchronously
@@ -63,7 +63,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get document details
   app.get("/api/documents/:id", async (req, res) => {
     try {
-      const storage = await getMongoStorage();
+      const storage = await getSupabaseStorage();
       const document = await storage.getDocument(req.params.id);
       if (!document) {
         return res.status(404).json({ message: "Document not found" });
@@ -77,7 +77,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete document
   app.delete("/api/documents/:id", async (req, res) => {
     try {
-      const storage = await getMongoStorage();
+      const storage = await getSupabaseStorage();
       
       // Check if document exists first
       const document = await storage.getDocument(req.params.id);
@@ -117,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get processing stats
   app.get("/api/stats", async (req, res) => {
     try {
-      const storage = await getMongoStorage();
+      const storage = await getSupabaseStorage();
       const stats = await storage.getStats();
       
       const documents = await storage.getAllDocuments();

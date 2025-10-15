@@ -1,5 +1,6 @@
 import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 import { randomUUID } from "crypto";
+import { generateEmbedding } from './services/openaiService';
 import { 
   type MongoDocument, 
   type MongoDocumentChunk, 
@@ -235,21 +236,71 @@ export class MongoStorage implements IStorage {
         (chunk.score || 0) >= VECTOR_SEARCH_CONFIG.SIMILARITY_THRESHOLD
       ) as MongoDocumentChunk[];
     } catch (error) {
-      console.error('Error performing vector search:', error);
+      console.warn('Vector search not available (requires MongoDB Atlas), using fallback text search');
+      console.log('Error details:', error instanceof Error ? error.message : 'Unknown error');
       // Fallback to text search if vector search fails
       return this.fallbackTextSearch(queryEmbedding, limit);
     }
   }
 
   private async fallbackTextSearch(queryEmbedding: number[], limit: number): Promise<MongoDocumentChunk[]> {
-    // Simple fallback - return recent chunks
+    console.log('Using fallback text search (MongoDB Atlas vector search not available)');
+    
+    // For local MongoDB, we'll use embedding-based similarity search
     const chunks = await this.documentChunks
       .find({})
-      .sort({ _id: -1 })
-      .limit(limit)
+      // .limit(limit * 5) // Get more chunks to filter from
       .toArray();
     
-    return chunks as MongoDocumentChunk[];
+    // Calculate cosine similarity between query embedding and chunk embeddings
+    const scoredChunks = await Promise.all(chunks.map(async (chunk) => {
+      try {
+        // Generate embedding for this chunk's content
+        const chunkEmbedding = await generateEmbedding(chunk.content);
+        
+        // Calculate cosine similarity
+        const similarity = this.calculateCosineSimilarity(queryEmbedding, chunkEmbedding);
+        
+        return {
+          ...chunk,
+          score: similarity
+        };
+      } catch (error) {
+        console.warn('Error generating embedding for chunk:', error);
+        // Fallback to a low score if embedding generation fails
+        return {
+          ...chunk,
+          score: 0.1
+        };
+      }
+    }));
+    
+    // Sort by similarity score and return top results
+    return scoredChunks
+      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .slice(0, limit) as MongoDocumentChunk[];
+  }
+
+  private calculateCosineSimilarity(vecA: number[], vecB: number[]): number {
+    if (vecA.length !== vecB.length) {
+      return 0;
+    }
+    
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+    
+    for (let i = 0; i < vecA.length; i++) {
+      dotProduct += vecA[i] * vecB[i];
+      normA += vecA[i] * vecA[i];
+      normB += vecB[i] * vecB[i];
+    }
+    
+    if (normA === 0 || normB === 0) {
+      return 0;
+    }
+    
+    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
   // Helper method to get database stats

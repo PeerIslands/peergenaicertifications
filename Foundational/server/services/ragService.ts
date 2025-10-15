@@ -1,8 +1,8 @@
 import pdf from 'pdf-parse';
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { getMongoStorage } from '../mongodb-storage';
+import { getSupabaseStorage } from '../supabase-storage';
 import { generateEmbedding, generateRAGResponse, type SearchContext } from './openaiService';
-import type { MongoDocumentChunk } from '@shared/mongodb-schema';
+import type { SupabaseDocumentChunk } from '@shared/supabase-schema';
 
 // Cosine similarity function
 function cosineSimilarity(a: number[], b: number[]): number {
@@ -22,7 +22,7 @@ function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 // Use LangChain's RecursiveCharacterTextSplitter for better text chunking
-async function chunkTextWithLangChain(text: string, maxChunkSize: number = 1000, overlap: number = 200): Promise<string[]> {
+async function chunkTextWithLangChain(text: string, maxChunkSize: number = 500, overlap: number = 200): Promise<string[]> {
   const splitter = new RecursiveCharacterTextSplitter({
     chunkSize: maxChunkSize,
     chunkOverlap: overlap,
@@ -36,7 +36,7 @@ async function chunkTextWithLangChain(text: string, maxChunkSize: number = 1000,
 
 export async function processPDFDocument(documentId: string, pdfBuffer: Buffer): Promise<void> {
   try {
-    const storage = await getMongoStorage();
+    const storage = await getSupabaseStorage();
     await storage.updateDocumentStatus(documentId, "processing");
     
     // Extract text from PDF
@@ -61,11 +61,11 @@ export async function processPDFDocument(documentId: string, pdfBuffer: Buffer):
       
       // Store chunk with embedding and metadata
       await storage.createDocumentChunk({
-        documentId,
+        document_id: documentId,
         content: chunk,
         embedding,
-        pageNumber: null, // PDF parsing doesn't reliably give page numbers
-        chunkIndex: i,
+        page_number: null, // PDF parsing doesn't reliably give page numbers
+        chunk_index: i,
         metadata: {
           documentName: document?.name || "Unknown Document",
           chunkType: "text"
@@ -77,7 +77,7 @@ export async function processPDFDocument(documentId: string, pdfBuffer: Buffer):
     await storage.updateDocumentStatus(documentId, "ready", chunks.length);
     
   } catch (error) {
-    const storage = await getMongoStorage();
+    const storage = await getSupabaseStorage();
     await storage.updateDocumentStatus(documentId, "error");
     throw new Error(`Failed to process PDF: ${(error as Error).message}`);
   }
@@ -93,7 +93,7 @@ export async function performRAGSearch(query: string): Promise<{
   }>;
 }> {
   try {
-    const storage = await getMongoStorage();
+    const storage = await getSupabaseStorage();
     
     // Generate embedding for the query
     const queryEmbedding = await generateEmbedding(query);
@@ -116,11 +116,11 @@ export async function performRAGSearch(query: string): Promise<{
     // Get document information for each chunk
     const relevantChunks = await Promise.all(
       combinedChunks.map(async (chunk) => {
-        const document = await storage.getDocument(chunk.documentId);
+        const document = await storage.getDocument(chunk.document_id);
         return {
           content: chunk.content,
           documentName: document?.name || chunk.metadata?.documentName || "Unknown Document",
-          pageNumber: chunk.pageNumber || undefined,
+          pageNumber: chunk.page_number || undefined,
           similarity: (chunk as any).hybridScore || 0.8,
         };
       })
@@ -140,9 +140,9 @@ export async function performRAGSearch(query: string): Promise<{
       query,
       response: result.response,
       sources: result.sources.map((source, index) => ({
-        documentId: combinedChunks[index]?.documentId || "",
-        documentName: source.document,
-        chunkId: combinedChunks[index]?.id || "",
+        document_id: combinedChunks[index]?.document_id || "",
+        document_name: source.document,
+        chunk_id: combinedChunks[index]?.id || "",
         content: source.excerpt,
         score: source.relevance
       })),
@@ -155,7 +155,7 @@ export async function performRAGSearch(query: string): Promise<{
 }
 
 // Text search function for keyword matching
-async function performTextSearch(storage: any, query: string, limit: number): Promise<MongoDocumentChunk[]> {
+async function performTextSearch(storage: any, query: string, limit: number): Promise<SupabaseDocumentChunk[]> {
   try {
     // Get all chunks and perform text search
     const allChunks = await storage.getAllChunks();
@@ -163,7 +163,7 @@ async function performTextSearch(storage: any, query: string, limit: number): Pr
     // Simple keyword matching with scoring
     const queryWords = query.toLowerCase().split(/\s+/).filter(word => word.length > 2);
     
-    const scoredChunks = allChunks.map((chunk: MongoDocumentChunk) => {
+    const scoredChunks = allChunks.map((chunk: SupabaseDocumentChunk) => {
       const content = chunk.content.toLowerCase();
       let score = 0;
       
@@ -197,10 +197,10 @@ async function performTextSearch(storage: any, query: string, limit: number): Pr
 
 // Combine vector and text search results with hybrid scoring
 function combineSearchResults(
-  vectorResults: MongoDocumentChunk[], 
+  vectorResults: SupabaseDocumentChunk[], 
   textResults: any[], 
   query: string
-): MongoDocumentChunk[] {
+): SupabaseDocumentChunk[] {
   const chunkMap = new Map<string, any>();
   
   // Add vector search results with vector score

@@ -82,7 +82,7 @@ export const COLLECTIONS = {
 // Vector Search Configuration
 export const VECTOR_SEARCH_CONFIG = {
   VECTOR_FIELD: 'embedding',
-  SIMILARITY_THRESHOLD: 0.7,
+  SIMILARITY_THRESHOLD: 0.1, // Lowered further for hash-based embeddings
   MAX_RESULTS: 10,
   INDEX_NAME: 'vector_index',
 } as const;
