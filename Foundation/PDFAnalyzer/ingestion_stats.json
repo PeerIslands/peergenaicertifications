@@ -1,0 +1,13 @@
+{
+  "total_files_processed": 6,
+  "total_chunks_created": 536,
+  "total_pages_processed": 101,
+  "failed_files": [],
+  "processing_start_time": "2025-10-13 19:51:27.288308",
+  "processing_end_time": "2025-10-13 19:51:52.620968",
+  "processing_duration_seconds": 25.33266,
+  "chunks_per_second": 21.158457106359933,
+  "total_chunks": 536,
+  "unique_documents": 6,
+  "total_pages": 42
+}

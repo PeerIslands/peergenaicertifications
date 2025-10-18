@@ -1,0 +1,29 @@
+# MongoDB Configuration
+# Note the below MongoDB Infos  should match in your Retriever code.
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+DATABASE_NAME=your_database_name
+COLLECTION_NAME=your_collection_name 
+
+# PDF Processing Configuration
+PDF_FOLDER=./PDF
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
+BATCH_SIZE=50
+
+# Embedding Configuration
+USE_AZURE_OPENAI=true
+
+# Azure OpenAI Configuration (only needed if USE_AZURE_OPENAI=true)
+AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com/
+AZURE_OPENAI_API_KEY=your-api-key-here
+AZURE_OPENAI_API_VERSION=2024-02-15-preview
+AZURE_OPENAI_DEPLOYMENT_NAME=gpt-4o-mini
+AZURE_EMBEDDING_DEPLOYMENT_NAME=text-embedding-ada-002
+
+# Logging Configuration
+LOG_LEVEL=INFO
+LOG_FILE=ingestion.log
+VERBOSE=false
+
+# Output Configuration
+STATS_FILE=ingestion_stats.json
