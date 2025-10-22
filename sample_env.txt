@@ -16,6 +16,14 @@ MONGODB_URI=mongodb://localhost:27017/
 MONGODB_DB_NAME=rag_database
 MONGODB_COLLECTION_NAME=documents
 
+# MongoDB Connection Pool Configuration
+MONGODB_POOL_SIZE=10
+MONGODB_MAX_POOL_SIZE=50
+
+# Logging Configuration
+LOG_LEVEL=INFO
+LOG_FILE=app.log
+
 # Optional: Embedding Model Configuration
 # Default model works well, but you can change it if needed
 # EMBEDDING_MODEL=all-MiniLM-L6-v2
@@ -29,3 +37,5 @@ MONGODB_COLLECTION_NAME=documents
 # 2. Replace 'your_openai_api_key_here' with your actual OpenAI API key
 # 3. Update MongoDB URI if using a different MongoDB instance
 # 4. Optionally customize database/collection names and processing parameters
+# 5. Adjust logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) as needed
+# 6. Configure connection pool size based on your application load
