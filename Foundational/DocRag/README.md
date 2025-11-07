@@ -1,4 +1,4 @@
-# RAG PDF Query System
+# DocRAG PDF Query System
 
 A complete Retrieval-Augmented Generation (RAG) system for querying PDF documents using LangChain, FAISS, Azure OpenAI, FastAPI, and React.
 
