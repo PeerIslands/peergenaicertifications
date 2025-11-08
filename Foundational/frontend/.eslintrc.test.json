@@ -1,0 +1,12 @@
+{
+  "extends": ["plugin:testing-library/react", "plugin:jest-dom/recommended"],
+  "rules": {
+    "testing-library/prefer-screen-queries": "error",
+    "testing-library/no-debugging-utils": "warn",
+    "jest-dom/prefer-checked": "error",
+    "jest-dom/prefer-enabled-disabled": "error",
+    "jest-dom/prefer-required": "error",
+    "jest-dom/prefer-to-have-attribute": "error"
+  }
+}
+

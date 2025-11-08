@@ -1,0 +1,234 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  # Backend Testing
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        working-directory: ./Foundational/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Run linting
+        working-directory: ./Foundational/backend
+        run: |
+          flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      - name: Run type checking
+        working-directory: ./Foundational/backend
+        run: |
+          mypy src/ --ignore-missing-imports || true
+      
+      - name: Run tests
+        working-directory: ./Foundational/backend
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'test-key-12345' }}
+          MONGODB_URI: mongodb://localhost:27017/test_chatpdf
+        run: |
+          pytest -v --cov=src --cov-report=xml --cov-report=html
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./Foundational/backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+        if: always()
+
+  # Frontend Testing
+  frontend-test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ./Foundational/frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./Foundational/frontend
+        run: npm ci
+      
+      - name: Run linting
+        working-directory: ./Foundational/frontend
+        run: npm run lint || true
+      
+      - name: Run type checking
+        working-directory: ./Foundational/frontend
+        run: npx tsc --noEmit || true
+      
+      - name: Run unit tests
+        working-directory: ./Foundational/frontend
+        run: npm run test -- --coverage
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./Foundational/frontend/coverage/coverage-final.json
+          flags: frontend
+          name: frontend-coverage
+        if: always()
+      
+      - name: Build
+        working-directory: ./Foundational/frontend
+        run: npm run build
+
+  # E2E Testing
+  e2e-test:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ./Foundational/frontend/package-lock.json
+      
+      - name: Install backend dependencies
+        working-directory: ./Foundational/backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Install frontend dependencies
+        working-directory: ./Foundational/frontend
+        run: npm ci
+      
+      - name: Install Playwright
+        working-directory: ./Foundational/frontend
+        run: npx playwright install --with-deps
+      
+      - name: Start backend
+        working-directory: ./Foundational/backend
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'test-key-12345' }}
+          MONGODB_URI: mongodb://localhost:27017/test_chatpdf
+        run: |
+          python src/main.py &
+          sleep 10
+      
+      - name: Run E2E tests
+        working-directory: ./Foundational/frontend
+        run: npm run test:e2e
+      
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: ./Foundational/frontend/playwright-report/
+          retention-days: 30
+
+  # Docker Build
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Foundational/backend
+          push: false
+          tags: foundational-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Foundational/frontend
+          push: false
+          tags: foundational-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Security Scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './Foundational'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+        if: always()
+
