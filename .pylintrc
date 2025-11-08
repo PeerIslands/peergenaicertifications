@@ -1,0 +1,19 @@
+[MASTER]
+ignore=venv,.git,__pycache__,test_setup.py
+jobs=1
+
+[MESSAGES CONTROL]
+disable=C0114,C0115,C0116,R0903,W0703,W1203,W0707,C0411,C0415,R0911
+
+[FORMAT]
+max-line-length=120
+indent-string='    '
+
+[BASIC]
+good-names=i,j,k,ex,_,id,db
+
+[DESIGN]
+max-args=7
+max-attributes=10
+max-locals=15
+
