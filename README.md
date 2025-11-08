@@ -24,4 +24,3 @@ In this git, participants will submit their code deliverables built as part of h
 •	Code should follow proper structure for folders such as common, frontend, backend etc and files such as readme, build and deployment scripts.
 
 •	Readme should include instructions on how to build and run the code locally including any dependencies.
-
