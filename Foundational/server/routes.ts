@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
-import { getSupabaseStorage } from "./supabase-storage";
+import { getPostgresStorage } from "./postgres-storage";
 import { processPDFDocument, performRAGSearch } from "./services/ragService";
 import { insertSupabaseDocumentSchema } from "@shared/supabase-schema";
 
@@ -24,10 +24,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all documents
   app.get("/api/documents", async (req, res) => {
     try {
-      const storage = await getSupabaseStorage();
+      const storage = await getPostgresStorage();
       const documents = await storage.getAllDocuments();
       res.json(documents);
     } catch (error) {
+      console.error('Error in /api/documents:', error);
       res.status(500).json({ message: (error as Error).message });
     }
   });
@@ -39,7 +40,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No PDF file provided" });
       }
 
-      const storage = await getSupabaseStorage();
+      const storage = await getPostgresStorage();
       const documentData = {
         name: req.file.originalname,
         size: req.file.size,
@@ -63,7 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get document details
   app.get("/api/documents/:id", async (req, res) => {
     try {
-      const storage = await getSupabaseStorage();
+      const storage = await getPostgresStorage();
       const document = await storage.getDocument(req.params.id);
       if (!document) {
         return res.status(404).json({ message: "Document not found" });
@@ -77,7 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete document
   app.delete("/api/documents/:id", async (req, res) => {
     try {
-      const storage = await getSupabaseStorage();
+      const storage = await getPostgresStorage();
       
       // Check if document exists first
       const document = await storage.getDocument(req.params.id);
@@ -117,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get processing stats
   app.get("/api/stats", async (req, res) => {
     try {
-      const storage = await getSupabaseStorage();
+      const storage = await getPostgresStorage();
       const stats = await storage.getStats();
       
       const documents = await storage.getAllDocuments();

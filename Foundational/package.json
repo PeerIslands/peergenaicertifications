@@ -9,7 +9,8 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
-    "test:supabase": "tsx test-supabase-migration.js"
+    "test:supabase": "tsx test-supabase-migration.js",
+    "migrate:postgres": "tsx migrate-postgres.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -73,6 +74,7 @@
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "pdf-parse": "^1.1.1",
+    "pg": "^8.13.1",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -101,6 +103,7 @@
     "@types/node": "20.16.11",
     "@types/passport": "^1.0.16",
     "@types/passport-local": "^1.0.38",
+    "@types/pg": "^8.11.10",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
     "@types/ws": "^8.5.13",

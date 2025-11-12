@@ -1,6 +1,6 @@
 import pdf from 'pdf-parse';
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { getSupabaseStorage } from '../supabase-storage';
+import { getPostgresStorage } from '../postgres-storage';
 import { generateEmbedding, generateRAGResponse, type SearchContext } from './openaiService';
 import type { SupabaseDocumentChunk } from '@shared/supabase-schema';
 
@@ -36,7 +36,7 @@ async function chunkTextWithLangChain(text: string, maxChunkSize: number = 500, 
 
 export async function processPDFDocument(documentId: string, pdfBuffer: Buffer): Promise<void> {
   try {
-    const storage = await getSupabaseStorage();
+    const storage = await getPostgresStorage();
     await storage.updateDocumentStatus(documentId, "processing");
     
     // Extract text from PDF
@@ -77,7 +77,7 @@ export async function processPDFDocument(documentId: string, pdfBuffer: Buffer):
     await storage.updateDocumentStatus(documentId, "ready", chunks.length);
     
   } catch (error) {
-    const storage = await getSupabaseStorage();
+    const storage = await getPostgresStorage();
     await storage.updateDocumentStatus(documentId, "error");
     throw new Error(`Failed to process PDF: ${(error as Error).message}`);
   }
@@ -93,7 +93,7 @@ export async function performRAGSearch(query: string): Promise<{
   }>;
 }> {
   try {
-    const storage = await getSupabaseStorage();
+    const storage = await getPostgresStorage();
     
     // Generate embedding for the query
     const queryEmbedding = await generateEmbedding(query);
