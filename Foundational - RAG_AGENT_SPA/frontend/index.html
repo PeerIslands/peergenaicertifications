@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Document QA System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+        .upload-area:hover {
+            background: #e9ecef;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .query-area {
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #007bff;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 RAG Document QA System</h1>
+
+        <div class="upload-area">
+            <h3>📁 Upload Documents</h3>
+            <input type="file" id="fileInput" multiple accept=".pdf,.txt">
+            <br>
+            <button onclick="uploadFiles()">Upload Files</button>
+            <div id="uploadStatus"></div>
+        </div>
+
+        <div class="query-area">
+            <h3>❓ Ask Questions</h3>
+            <textarea id="queryInput" placeholder="Ask a question about your uploaded documents..." rows="4"></textarea>
+            <br>
+            <button onclick="askQuestion()">Ask Question</button>
+            <div id="queryResult"></div>
+        </div>
+
+        <div>
+            <h3>📊 System Status</h3>
+            <button onclick="checkStatus()">Check Status</button>
+            <button onclick="clearDocuments()">Clear Documents</button>
+            <div id="statusResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                showStatus('uploadStatus', 'Please select files to upload', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files', file);
+            }
+
+            try {
+                showStatus('uploadStatus', 'Uploading files...', 'success');
+                const response = await fetch(`${API_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showStatus('uploadStatus', `✅ ${result.message}`, 'success');
+                    fileInput.value = '';
+                } else {
+                    showStatus('uploadStatus', `❌ Upload failed: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus('uploadStatus', `❌ Upload error: ${error.message}`, 'error');
+            }
+        }
+
+        async function askQuestion() {
+            const query = document.getElementById('queryInput').value.trim();
+
+            if (!query) {
+                showStatus('queryResult', 'Please enter a question', 'error');
+                return;
+            }
+
+            try {
+                showStatus('queryResult', 'Thinking...', 'success');
+                const response = await fetch(`${API_BASE}/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showResult('queryResult', result.answer, result.confidence);
+                } else {
+                    showStatus('queryResult', `❌ Query failed: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showStatus('queryResult', `❌ Query error: ${error.message}`, 'error');
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/documents/count`);
+                const result = await response.json();
+                showStatus('statusResult', `📄 Documents in system: ${result.document_count}`, 'success');
+            } catch (error) {
+                showStatus('statusResult', `❌ Status check failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearDocuments() {
+            try {
+                const response = await fetch(`${API_BASE}/documents`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                showStatus('statusResult', `✅ ${result.message}`, 'success');
+            } catch (error) {
+                showStatus('statusResult', `❌ Clear failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function showResult(elementId, answer, confidence) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `
+                <div class="result">
+                    <h4>🤖 AI Response:</h4>
+                    <p>${answer}</p>
+                    <small>Confidence: ${Math.round(confidence * 100)}%</small>
+                </div>
+            `;
+        }
+
+        // Check system status on page load
+        window.onload = function() {
+            checkStatus();
+        };
+    </script>
+</body>
+</html>
