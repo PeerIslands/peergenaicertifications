@@ -363,6 +363,11 @@ export async function generateRAGResponse(context: SearchContext): Promise<{
   }>;
 }> {
   try {
+    // Validate API key before making the request
+    if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY.trim() === '') {
+      throw new Error('OPENROUTER_API_KEY is not set. Please set it in your .env file. Get your API key from https://openrouter.ai/keys');
+    }
+
     const contextText = context.relevantChunks
       .map((chunk, index) => 
         `[Source ${index + 1}] Document: ${chunk.documentName}, Page: ${chunk.pageNumber || 'N/A'}\n${chunk.content}\n`
@@ -394,6 +399,17 @@ export async function generateRAGResponse(context: SearchContext): Promise<{
       sources,
     };
   } catch (error) {
-    throw new Error(`Failed to generate RAG response: ${(error as Error).message}`);
+    const errorMessage = (error as Error).message;
+    
+    // Provide more helpful error messages for common authentication issues
+    if (errorMessage.includes('401') || errorMessage.includes('User not found') || errorMessage.includes('authentication')) {
+      throw new Error(`Authentication failed: Invalid or missing OPENROUTER_API_KEY. Please check your .env file and ensure your API key is valid. Get your API key from https://openrouter.ai/keys`);
+    }
+    
+    if (errorMessage.includes('OPENROUTER_API_KEY is not set')) {
+      throw error; // Re-throw our custom error as-is
+    }
+    
+    throw new Error(`Failed to generate RAG response: ${errorMessage}`);
   }
 }
