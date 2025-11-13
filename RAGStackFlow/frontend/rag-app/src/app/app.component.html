@@ -1,0 +1,18 @@
+<div class="app-container">
+  <header class="app-header">
+    <h1>RAG Document Chat</h1>
+    <p>Upload documents and chat with AI using contextual grounding</p>
+  </header>
+
+  <div class="main-content">
+    <div class="upload-section">
+      <app-file-upload (fileUploaded)="onFileUploaded()"></app-file-upload>
+    </div>
+
+    <div class="chat-section">
+      <app-chat [hasDocuments]="hasDocuments"></app-chat>
+    </div>
+  </div>
+</div>
+
+<router-outlet />

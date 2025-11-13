@@ -1,0 +1,85 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h2>Chat with Your Documents</h2>
+    <div class="controls">
+      <mat-form-field appearance="outline" class="model-selector">
+        <mat-label>AI Model</mat-label>
+        <mat-select [(ngModel)]="selectedModel">
+          <mat-option *ngFor="let model of models" [value]="model.value">
+            {{ model.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-icon-button (click)="resetChat()" matTooltip="Reset Chat">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="messages-container">
+    <div *ngIf="messages.length === 0" class="empty-state">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      <p>Start a conversation about your documents</p>
+    </div>
+
+    <div *ngFor="let message of messages" 
+         [class]="'message ' + message.role">
+      <div class="message-content">
+        <div class="message-header">
+          <mat-icon>{{ message.role === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+          <span class="role-label">{{ message.role === 'user' ? 'You' : 'Assistant' }}</span>
+        </div>
+        <div class="message-text">{{ message.content }}</div>
+        
+        <div *ngIf="message.sources && message.sources.length > 0" class="message-meta">
+          <div class="sources">
+            <strong>Sources:</strong>
+            <mat-chip-set>
+              <mat-chip *ngFor="let source of message.sources">
+                <mat-icon>description</mat-icon>
+                {{ source }}
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+          <div *ngIf="message.confidence !== undefined" class="confidence">
+            <mat-icon matTooltip="Confidence Score">insights</mat-icon>
+            {{ (message.confidence * 100).toFixed(0) }}%
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading" class="message assistant loading">
+      <div class="message-content">
+        <div class="message-header">
+          <mat-icon>smart_toy</mat-icon>
+          <span class="role-label">Assistant</span>
+        </div>
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-container">
+    <mat-form-field appearance="outline" class="message-input">
+      <mat-label>Ask a question about your documents...</mat-label>
+      <textarea 
+        matInput 
+        [(ngModel)]="userMessage" 
+        (keypress)="onKeyPress($event)"
+        [disabled]="isLoading"
+        rows="2"></textarea>
+    </mat-form-field>
+    <button 
+      mat-fab 
+      color="primary" 
+      (click)="sendMessage()" 
+      [disabled]="!userMessage.trim() || isLoading">
+      <mat-icon>send</mat-icon>
+    </button>
+  </div>
+</div>

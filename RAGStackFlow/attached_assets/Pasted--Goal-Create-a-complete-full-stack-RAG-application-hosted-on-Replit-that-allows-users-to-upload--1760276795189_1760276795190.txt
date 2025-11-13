@@ -1,0 +1,144 @@
+**Goal:**
+Create a complete full-stack RAG application hosted on Replit that allows users to upload documents (PDF, Word, Excel, Markdown, and other LangChain-supported formats), index them efficiently with embeddings, and chat conversationally with those files using contextually grounded responses.
+
+---
+
+### 🧩 **Tech Stack**
+
+* **Frontend:** Angular (latest stable version)
+* **Backend:** Python (FastAPI)
+* **AI Framework:** LangChain
+* **Embedding Model:** Voyage AI free model (e.g., `voyage-large-2-instruct`)
+* **Supported LLMs:** OpenAI (GPT-4/4o), Google Gemini, and Anthropic Claude
+* **Vector Store:** FAISS or Chroma (whichever works best with Voyage embeddings)
+* **Deployment Target:** Replit (single project, frontend + backend)
+
+---
+
+### ⚙️ **Functional Requirements**
+
+#### 1. File Upload & Processing
+
+* Frontend UI with drag-and-drop or file selector for document uploads.
+* Support for **PDF, DOCX, XLSX, MD, TXT, and CSV** files.
+* Backend endpoint `/upload` that:
+
+  * Extracts and normalizes text using LangChain document loaders.
+  * Splits text with **RecursiveCharacterTextSplitter** (optimized chunking).
+  * Generates **Voyage AI embeddings**.
+  * Stores embeddings and metadata in FAISS/Chroma vector DB.
+
+#### 2. Conversational Chat Interface
+
+* Chat UI similar to modern assistants (streamed responses, multiline input).
+* Backend `/chat` endpoint that:
+
+  * Retrieves top-k relevant chunks using similarity search and reranking (MMR or score-based).
+  * Uses a **LangChain RetrievalQA** or **ConversationalRetrievalChain** with memory.
+  * Supports LLM selection (OpenAI/Gemini/Anthropic) via dropdown in frontend.
+  * Includes conversation memory (buffer or summary-based).
+
+#### 3. Context Grounding & Guardrails
+
+* Model responses must be **grounded strictly on retrieved document context**.
+* Include a guardrail chain that:
+
+  * Rejects or deflects any questions **outside the uploaded document topics**.
+  * Detects hallucinations (responses not supported by retrieved content).
+  * Adds citations or file references for transparency.
+* Return a structured JSON response containing:
+
+  ```json
+  {
+    "answer": "...",
+    "sources": ["file1.pdf", "file2.docx"],
+    "confidence": 0.93
+  }
+  ```
+
+#### 4. Memory & Context
+
+* Store chat history per session using in-memory store or local vector store.
+* Implement contextual continuity (conversation builds on previous responses).
+
+---
+
+### 🔐 **Implementation Notes**
+
+* Use **FastAPI CORS middleware** for frontend-backend communication.
+* Use **async endpoints** for concurrency.
+* Store embeddings and session data under `/data` directory on Replit.
+* Add environment variables for:
+
+  * `OPENAI_API_KEY`
+  * `VOYAGE_API_KEY`
+  * `ANTHROPIC_API_KEY`
+  * `GOOGLE_API_KEY`
+
+---
+
+### 💬 **Frontend Features**
+
+* Responsive Angular chat layout (Material Design).
+* Dropdown for model selection (GPT-4, Gemini, Claude).
+* File upload zone with progress indicator.
+* Chat window with:
+
+  * Streaming messages
+  * Citation popups
+  * Session reset button
+
+---
+
+### 🚀 **Quality & Efficiency**
+
+* Use **Voyage embeddings** for best free-tier semantic quality.
+* Use **FAISS IndexFlatIP** for fast cosine similarity search.
+* Use **LangChain’s MMR retriever** to diversify results.
+* Add efficient chunk size tuning (~800-1000 tokens with 150 overlap).
+* Minimize latency and memory usage to run smoothly on Replit.
+
+---
+
+### 🧩 **Deliverables**
+
+1. **Angular Frontend:** `/frontend`
+
+   * `src/app/components/chat`, `src/app/components/upload`
+2. **Python Backend:** `/backend`
+
+   * `main.py` (FastAPI entry point)
+   * `rag_pipeline.py` (embeddings, retriever, LLM chain)
+   * `requirements.txt`
+3. **README.md:** Instructions for setup and running both services.
+4. **.replit & replit.nix** files configured for running full stack (frontend + backend concurrently).
+
+---
+
+### 🧾 **Behavior Example**
+
+**User:** “Summarize the project milestones mentioned in the document.”
+**System:**
+
+> Based on *project_plan.pdf*, the milestones are:
+>
+> * Design completion by March 15
+> * Beta testing by May 1
+> * Launch by July 10
+>
+> *(Sources: project_plan.pdf, p.3)*
+
+If the user asks “Who is the President of the US?”, respond:
+
+> “I’m only able to answer questions based on the documents you uploaded.”
+
+---
+
+### ✅ **Final Goal**
+
+Generate a complete, runnable Replit project that:
+
+* Launches both frontend and backend automatically,
+* Lets users upload and chat with their documents,
+* Uses efficient RAG architecture with LangChain + Voyage + OpenAI/Gemini/Anthropic,
+* Responds **only** from document context, with **no hallucinations**.
