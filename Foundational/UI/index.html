@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LLM + RAG Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <!-- Left side: Upload Panel -->
+    <div class="left-panel">
+      <h2>📄 Upload Documents</h2>
+      <div id="drop-zone">Drag & Drop PDF, DOCX, or CSV files here</div>
+      <input type="file" id="fileInput" multiple hidden />
+      <button id="uploadBtn">Select Files</button>
+
+      <div class="uploaded-list">
+        <h3>Uploaded Files</h3>
+        <ul id="fileList"></ul>
+      </div>
+    </div>
+
+    <!-- Right side: Chat Panel -->
+    <div class="right-panel">
+      <h2>🤖 Chat Assistant</h2>
+      <div id="chatBox" class="chat-box"></div>
+      <div class="chat-input">
+        <input type="text" id="userInput" placeholder="Ask about your documents..." />
+        <button id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</body>
+</html>

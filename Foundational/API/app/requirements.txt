@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pymongo
+pymupdf
+python-docx
+pandas
+faiss-cpu
+python-multipart
+openai>=1.0.0
+python-dotenv
+feedparser
