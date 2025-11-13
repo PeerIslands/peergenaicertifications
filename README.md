@@ -7,6 +7,7 @@ In this git, participants will submit their code deliverables built as part of h
 
 **Branch Creation**
 
+
 •	Participants can create branches with their full name. For example, if your name is John Doe, you can create branch name as /johndoe
 
 •	Participants submit their code inside this branch. 
