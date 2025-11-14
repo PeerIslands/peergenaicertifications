@@ -19,7 +19,7 @@ function App() {
     "What problem were GANs trying to solve in AI",
     "How do GANs make fake images look real?",
     "What is attention, and why did it replace older sequence models?",
-    "What makes Mercury models faster than older AI models?",
+    "What does SAM 2 let people do with images and videos?",
   ]
 
   useEffect(() => {

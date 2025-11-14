@@ -6,6 +6,9 @@ import os
 from dotenv import load_dotenv
 import shutil
 
+# Set tokenizers parallelism to false to avoid forking issues
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 from rag_service import RAGService
 
 # Load environment variables
@@ -56,6 +59,7 @@ async def ingest_pdfs(files: List[UploadFile] = File(...)):
     Upload and ingest PDF files into the vector store
     """
     try:
+        print(f"Received {len(files)} files for upload")
         saved_files = []
         
         # Save uploaded files
@@ -67,7 +71,9 @@ async def ingest_pdfs(files: List[UploadFile] = File(...)):
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
             saved_files.append(file_path)
+            print(f"Saved file: {file.filename}")
         
+        print(f"Total files saved: {len(saved_files)}")
         # Ingest into RAG system
         rag_service.ingest_documents(saved_files)
         

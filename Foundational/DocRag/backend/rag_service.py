@@ -53,16 +53,19 @@ class RAGService:
             documents = loader.load()
             split_docs = self.text_splitter.split_documents(documents)
             all_documents.extend(split_docs)
+            print(f"Loaded {len(split_docs)} chunks from {os.path.basename(pdf_path)}")
         
         # Create or update vector store
         if self.vector_store is None:
             self.vector_store = FAISS.from_documents(all_documents, self.embeddings)
+            self.document_count = len(all_documents)
+            print(f"Created new vector store with {self.document_count} chunks")
         else:
             # Add new documents to existing vector store
             new_vector_store = FAISS.from_documents(all_documents, self.embeddings)
             self.vector_store.merge_from(new_vector_store)
-        
-        self.document_count = len(all_documents)
+            self.document_count += len(all_documents)  # Accumulate count
+            print(f"Added {len(all_documents)} new chunks. Total: {self.document_count} chunks")
         
         # Create retriever
         self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
