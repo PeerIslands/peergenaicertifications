@@ -167,6 +167,12 @@ Display Answer
 
 - pip install -r requirements.txt
 
+### 3. create a .env file in the project root with your Gemini API key:
+
+```GEMINI_API_KEY="your_gemini_api_key_here"
+
+```
+
 ### 3. Run the program:
 
 - streamlit run pdf_assistant.py
