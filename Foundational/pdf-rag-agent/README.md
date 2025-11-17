@@ -2,30 +2,6 @@
 
 This is an AI chatbot that helps users by answering their questions using uploaded PDF files. It uses RAG (Retrieval-Augmented Generation) & Google’s Gemini API to find and provide relevant answers from the documents.
 
-## How We Collected Data
-
-To make this chatbot useful:
-
-- We visited 20 different university websites in Pakistan and copied their FAQs (Frequently Asked Questions).
-- We also asked students to fill out a form with their own questions.
-- We combined all these questions and answers into one PDF.
-- This PDF was used by the chatbot to answer questions.
-
-## What This Chatbot Can Do
-
-- Reads PDF files like brochures, admission guides, and FAQs.
-- Understands student questions.
-- Gives quick and smart answers using AI.
-
-## Features
-
-- Upload university-related PDF documents (in our case -> university_faq.pdf)
-- Breaks the PDF into small parts for better understanding.
-- Turns those parts into a format that AI can understand.
-- Finds the best parts of the PDF related to your question.
-- Gives a short and helpful answer using Google's Gemini AI.
-- Easy-to-use web app made with Streamlit.
-
 ## Tools and Technologies Used
 
 - Python

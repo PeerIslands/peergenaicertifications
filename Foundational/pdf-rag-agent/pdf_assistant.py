@@ -8,7 +8,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-API_KEY = "AIzaSyAE0DFSgclW7HKSUpUdMDF0qetUe8pp1ds"
+# Load API key from environment (.env) for security. Falls back to None if not set.
+from dotenv import load_dotenv
+load_dotenv()
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+
 GEMINI_EMBED_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key={API_KEY}"
 GEMINI_CHAT_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={API_KEY}"
 
