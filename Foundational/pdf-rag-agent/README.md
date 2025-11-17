@@ -79,7 +79,7 @@ Display Answer
 
 1. Upload a PDF file (for example: university FAQs).
 2. The chatbot reads and splits the content into small parts.
-3. You type a question (for example: "What documents are needed for NTS?").
+3. You type a question (for example: " I have DAE background. Which programmes can I apply for? ").
 4. The chatbot finds the most relevant parts from the PDF.
 5. It uses those parts to give a short and correct answer.
 
