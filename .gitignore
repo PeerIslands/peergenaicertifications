@@ -42,4 +42,5 @@ htmlcov/
 .hypothesis/
 *.cover
 .cache/
-
+test.py
+Foundation/document-rag/test.ipynb

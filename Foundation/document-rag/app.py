@@ -382,12 +382,11 @@ with col2:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
             
-            # Show source documents if available
+            # Detailed source documents in expander
             if "sources" in message and message["sources"]:
                 with st.expander("📄 Source Documents"):
                     for i, source in enumerate(message["sources"], 1):
                         st.write(f"**Source {i}:**")
-                        # Get document title/source file name
                         doc_title = source.metadata.get('source_file', source.metadata.get('source', 'Unknown Document'))
                         st.write(f"**Document:** {doc_title}")
                         st.write(f"**Page:** {source.metadata.get('page', 'N/A')}")
