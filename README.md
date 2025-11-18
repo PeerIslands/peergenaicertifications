@@ -20,9 +20,18 @@ ollama --version
 🔹 Install Any LLM You Want (example: Gemma 3:1B)
 ollama pull gemma3:1b
 
+ollama run gemma3:1b
+
 
 📌 2. Clone Project & Enter Backend Folder
-git clone <your-repo-url>
+git clone https://github.com/PeerIslands/peergenaicertifications.git
+
+cd peergenaicertifications
+
+git fetch origin
+
+git checkout ketanpande
+
 cd backend
 
 📌 3. Create & Activate Virtual Environment
@@ -74,3 +83,11 @@ This is a simple UI with:
 
 ✔ Ask question
 ✔ Display Answer
+
+ Frontend will run at : 
+
+ http://127.0.0.1:5000/
+
+ open this URL in the browser , you will see below UI 
+
+ ![alt text](image.png)
