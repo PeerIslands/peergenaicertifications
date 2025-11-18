@@ -109,6 +109,15 @@ def get_gemini_embedding(text):
 def answer_question_with_gemini(question, context):
     prompt = template.format(question=question, context=context)
 
+    # DEBUG: show final prompt (console + UI)
+    final_prompt = prompt
+    print("[DEBUG] Final prompt to Gemini Chat API:\n" + final_prompt)
+    try:
+        st.write("**DEBUG: Final prompt to Gemini Chat API**")
+        st.code(final_prompt)
+    except Exception:
+        pass
+
     headers = {"Content-Type": "application/json"}
     body = {
         "contents": [
@@ -124,6 +133,7 @@ def answer_question_with_gemini(question, context):
         response = requests.post(GEMINI_CHAT_URL, headers=headers, json=body, timeout=20)
         result = response.json()
     except Exception as e:
+        print(f"[DEBUG] Chat request failed: {e}")
         return f"Sorry, chat request failed: {e}"
 
     # try a few common result shapes
@@ -146,7 +156,14 @@ def answer_question_with_gemini(question, context):
         pass
 
     # fallback: return stringified result (small)
-    return json.dumps(result)[:1000]
+    raw = json.dumps(result)[:1000]
+    print("[DEBUG] Gemini Chat raw response (truncated):", raw)
+    try:
+        st.write("**DEBUG: Gemini Chat raw response (truncated)**")
+        st.write(raw)
+    except Exception:
+        pass
+    return raw
 
 # ---- Text Handling ----
 def upload_pdf(file):
@@ -168,10 +185,35 @@ def split_text(documents):
 # ---- Indexing ----
 def index_documents(chunks):
     indexed = 0
-    for chunk in chunks:
+    # For debugging, print each chunk and its embedding summary as it's indexed
+    for i, chunk in enumerate(chunks, start=1):
         text = chunk.page_content
         embedding = get_gemini_embedding(text)
         if embedding is not None:
+            # Console debug: show chunk number, length and a short excerpt
+            try:
+                excerpt = text.replace("\n", " ")[:300]
+            except Exception:
+                excerpt = text[:300]
+            print(f"[DEBUG] Chunk #{i} (len={len(text)}): {excerpt}...")
+
+            # Console debug: embedding length and first few values
+            try:
+                emb_list = embedding.tolist() if hasattr(embedding, 'tolist') else list(embedding)
+                print(f"[DEBUG] Embedding #{i}: len={len(emb_list)} first_10={emb_list[:10]}")
+            except Exception as e:
+                print(f"[DEBUG] Failed to print embedding #{i}: {e}")
+
+            # Also attempt to show in Streamlit UI for convenience
+            try:
+                st.write(f"**DEBUG: Chunk #{i}**")
+                st.write(excerpt + "...")
+                st.write(f"**DEBUG: Embedding #{i} (len={len(emb_list)}) - first 10:**")
+                st.write(emb_list[:10])
+            except Exception:
+                # If Streamlit isn't running (e.g., running unit tests), ignore UI logging
+                pass
+
             documents_store.append({"content": text, "embedding": embedding})
             indexed += 1
     return indexed
