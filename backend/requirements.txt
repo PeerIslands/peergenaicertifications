@@ -1,0 +1,7 @@
+flask                         # Web framework for building the API backend / routes
+pypdf                         # Used to read and extract text from PDF files
+langchain                     # Framework to build LLM apps (RAG, chains, prompts)
+chromadb                      # Vector database to store embeddings for retrieval
+sentence-transformers         # To generate embeddings for text/PDF content
+ollama                        # Local LLM runner (Gemma, Llama, etc.)
+faiss-cpu                     # Fast similarity search library used for vector retrieval
