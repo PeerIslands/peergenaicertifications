@@ -64,7 +64,7 @@ client = chromadb.PersistentClient(path=PERSIST_DIR)
 
 # /**
 #  * Create or load an existing Chroma collection.
-#  * Collection: "testrag"
+#  * Collection: "peer-ai-table"
 #  *
 #  * @throws {NotFoundError} If collection does not exist.
 #  * @returns {Collection} Chroma collection instance.
