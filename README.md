@@ -1,27 +1,93 @@
-# PeerGenAI Certifications
-Repository for submitting the code deliverables as part of hands-on exercises in Peer GenAI Certifications
+📌 1. Install Required Software
+🔹 Install Python 3.10+
 
-**Overview**
+Download from:
+https://www.python.org/downloads/
 
-In this git, participants will submit their code deliverables built as part of hands-on exercises in Peer GenAI Certifications. Users can create branches with their names from main, push their code and raise PRs. PRs will be reviewed but not approved. See below for details.
+Select:
+✔ Add to PATH
+✔ Install pip
 
-**Branch Creation**
+🔹 Install Ollama (Local LLM Runner)
 
-•	Participants can create branches with their full name. For example, if your name is John Doe, you can create branch name as /johndoe
+Download from:
+https://ollama.com/download
 
-•	Participants submit their code inside this branch. 
+After install, verify:
 
-•	Participants should raise PR to indicate their submission. Only one PR will be allowed per person for submission.
+ollama --version
 
-•	PRs will be reviewed but not approved and merged into main branch.
+🔹 Install Any LLM You Want (example: Gemma 3:1B)
+ollama pull gemma3:1b
 
-**Code Submission**
+ollama run gemma3:1b
 
-•	Ensure code follows proper standards based on the technology used.
 
-•	Include unit test cases and test results where applicable.
+📌 2. Clone Project & Enter Backend Folder
+git clone https://github.com/PeerIslands/peergenaicertifications.git
 
-•	Code should follow proper structure for folders such as common, frontend, backend etc and files such as readme, build and deployment scripts.
+cd peergenaicertifications
 
-•	Readme should include instructions on how to build and run the code locally including any dependencies.
+git fetch origin
 
+git checkout ketanpande
+
+cd backend
+
+📌 3. Create & Activate Virtual Environment
+Windows
+python -m venv venv
+venv\Scripts\activate
+
+macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+
+📌 4. Install Backend Dependencies
+pip install -r requirements.txt
+
+
+Make sure your requirements.txt contains:
+
+flask                         # Web framework for building the API backend / routes
+pypdf                         # Used to read and extract text from PDF files
+langchain                     # Framework to build LLM apps (RAG, chains, prompts)
+chromadb                      # Vector database to store embeddings for retrieval
+sentence-transformers         # To generate embeddings for text/PDF content
+ollama                        # Local LLM runner (Gemma, Llama, etc.)
+faiss-cpu  
+
+
+📌 5. Run Ingestion for Any PDF
+python ingest.py 
+
+
+This will:
+
+✔ Load PDF
+✔ Split text
+✔ Store into a Chroma collection
+✔ Ready for querying
+
+📌 6. Start Backend Server
+python app.py
+
+
+Backend will run at:
+
+http://127.0.0.1:5000/query
+
+🟩 FRONTEND SETUP (Normal .html file)
+
+This is a simple UI with:
+
+✔ Ask question
+✔ Display Answer
+
+ Frontend will run at : 
+
+ http://127.0.0.1:5000/
+
+ open this URL in the browser , you will see below UI 
+
+ ![alt text](image.png)
