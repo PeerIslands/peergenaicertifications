@@ -1,0 +1,11 @@
+flask
+flask-cors
+python-dotenv
+langchain
+langchain-groq
+langchain-core
+langchain-community
+langchain-text-splitters
+pypdf
+sentence-transformers
+torch
