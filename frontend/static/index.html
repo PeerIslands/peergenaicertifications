@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>AI Career Advisor (Groq + LangChain)</title>
+    <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    #chat { border: 1px solid #ddd; padding: 12px; height: 60vh; overflow: auto; background: #fafafa; }
+    .msg { margin: 8px 0; }
+    .user { text-align: right; font-weight: bold; }
+    .ai { text-align: left; background: #fff; border-radius: 6px; padding: 8px; }
+    #controls { margin-top: 12px; }
+  </style>
+</head>
+<body>
+<h2>AI Career Advisor (Groq + RAG)</h2>
+<div id="chat"></div>
+
+<div id="controls">
+    <textarea id="msg" rows="3" cols="80" placeholder="Ask about your career..."></textarea>
+    <br/>
+    <button id="sendBtn">Send</button>
+</div>
+
+<script>
+    // Simple single-session client (session id is stored in localStorage)
+    const sessionId = localStorage.getItem("session_id") || ("s_" + Math.random().toString(36).slice(2,9));
+    localStorage.setItem("session_id", sessionId);
+
+    const chatDiv = document.getElementById("chat");
+    const msgInput = document.getElementById("msg");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function appendMessage(who, text) {
+      const el = document.createElement("div");
+      el.classList.add("msg");
+      el.innerHTML = `<div class="${who === 'user' ? 'user' : 'ai'}">${who === 'user' ? 'You' : 'AI'}: ${text}</div>`;
+      chatDiv.appendChild(el);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    sendBtn.onclick = async () => {
+      const text = msgInput.value.trim();
+      if (!text) return;
+      appendMessage('user', text);
+      msgInput.value = "";
+      sendBtn.disabled = true;
+
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ message: text, session_id: sessionId })
+        });
+        const data = await res.json();
+        if (data.error) {
+          appendMessage('ai', "Error: " + data.error);
+        } else {
+          appendMessage('ai', data.answer);
+        }
+      } catch (err) {
+        appendMessage('ai', "Network error: " + err.message);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>
