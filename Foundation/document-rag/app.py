@@ -7,6 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.documents import Document
 import tempfile
 import os
 import logging
@@ -148,6 +149,26 @@ def create_vector_store(documents: List, mongodb_uri: str, db_name: str, collect
     avg_chunk_size = total_chunk_chars / len(chunks) if chunks else 0
     logger.debug(f"Average chunk size: {avg_chunk_size:.0f} characters")
     
+    # Filter metadata to only include allowed fields
+    allowed_metadata_fields = {'total_pages', 'page', 'page_label', 'source_file'}
+    logger.info("Filtering metadata to include only allowed fields")
+    filtered_chunks = []
+    for chunk in chunks:
+        # Create new metadata dict with only allowed fields
+        filtered_metadata = {
+            key: value 
+            for key, value in chunk.metadata.items() 
+            if key in allowed_metadata_fields
+        }
+        # Create a new document with filtered metadata
+        filtered_chunk = Document(
+            page_content=chunk.page_content,
+            metadata=filtered_metadata
+        )
+        filtered_chunks.append(filtered_chunk)
+    
+    logger.info(f"Filtered {len(filtered_chunks)} chunk(s) metadata")
+    
     # Create embeddings
     logger.info("Initializing OpenAI embeddings")
     embeddings = OpenAIEmbeddings()
@@ -163,8 +184,8 @@ def create_vector_store(documents: List, mongodb_uri: str, db_name: str, collect
         )
         
         logger.info("Adding documents to MongoDB vector store")
-        # Add documents to the vector store
-        vector_store.add_documents(chunks)
+        # Add documents to the vector store (only allowed fields will be stored)
+        vector_store.add_documents(filtered_chunks)
         
         logger.info(f"MongoDB vector store created successfully with {len(chunks)} embedded chunk(s)")
         logger.info(f"Documents stored in: {db_name}.{collection_name}")
