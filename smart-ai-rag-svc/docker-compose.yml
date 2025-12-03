@@ -1,0 +1,91 @@
+# ============================================================================
+# Docker Compose - Smart AI RAG Service
+# ============================================================================
+#
+# Quick Start:
+#   1. cp env.template .env
+#   2. Edit .env with your API keys
+#   3. docker-compose up -d
+#   4. Visit http://localhost:8000/docs
+#
+# Commands:
+#   docker-compose up -d              # Start services
+#   docker-compose down               # Stop services
+#   docker-compose logs -f rag-api    # View logs
+#   docker-compose ps                 # Check status
+#   docker-compose restart rag-api    # Restart API
+#   docker-compose exec rag-api bash  # Access container
+#
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # RAG API Service
+  # ============================================================================
+  rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DATABASE=rag_database
+      - MONGODB_COLLECTION=documents
+    env_file:
+      - .env
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+  # ============================================================================
+  # MongoDB Database
+  # ============================================================================
+  mongodb:
+    image: mongo:7
+    container_name: rag-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=rag_database
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - rag-network
+
+# ============================================================================
+# Volumes
+# ============================================================================
+volumes:
+  mongodb-data:
+    driver: local
+
+# ============================================================================
+# Networks
+# ============================================================================
+networks:
+  rag-network:
+    driver: bridge
+

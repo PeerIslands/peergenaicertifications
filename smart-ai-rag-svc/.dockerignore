@@ -1,0 +1,85 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+
+# Virtual Environments
+venv/
+venv_*/
+env/
+ENV/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+*.sqlite
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Documentation (not needed in container)
+*.md
+!README.md
+docs/
+ISSUES_FIXED.md
+PYTHON312_SUCCESS.md
+FINAL_STATUS.md
+WARNINGS_FIXED.md
+KNOWN_ISSUES.md
+COMPLETE_SUMMARY.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Tests (optional - uncomment if you don't want to run tests in container)
+# tests/
+# pytest.ini
+# .coveragerc
+
+# Development files
+*.txt.bak
+*.backup
+tmp/
+temp/
+
+# Data files (not needed in image)
+data/
+uploads/
+*.pdf
+*.csv
+*.json
+!requirements.txt
+
+# Docker files (no need to copy into image)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Other
+node_modules/

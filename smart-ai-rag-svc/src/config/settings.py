@@ -40,7 +40,5 @@ class Settings:
 # Global settings instance
 settings = Settings()
 
-# Verify the correct values are loaded
-print(f"✅ Using embedding model: {settings.embedding_model}")
-print(f"✅ Using LLM model: {settings.llm_model}")
-print(f"✅ Using max_tokens: {settings.max_tokens}")
+# Note: Configuration logging removed for production readiness
+# Settings are loaded silently to avoid exposing configuration in logs

@@ -1,43 +1,152 @@
-# Core LangChain packages
-langchain>=0.1.0,<0.3.0
-langchain-openai>=0.1.0,<0.2.0
-langchain-mongodb>=0.1.0,<0.2.0
-langchain-community>=0.0.20,<0.3.0
+# ============================================================================
+# Smart AI RAG Service - Dependencies
+# ============================================================================
+# Install: pip install -r requirements.txt
+# For dev: Uncomment development section below
+# ============================================================================
 
-# Database and storage
-pymongo>=4.6.0,<5.0.0
+# ----------------------------------------------------------------------------
+# CORE PRODUCTION DEPENDENCIES
+# ----------------------------------------------------------------------------
 
-# Document processing
-pypdf>=3.0.0,<5.0.0
+# LangChain Framework
+# Note: Using compatible versions that work with Python 3.12
+# Upgraded to 0.3.x to fix 'proxies' argument bug
+langchain==0.3.7
+langchain-openai==0.2.9
+langchain-mongodb==0.2.0
+langchain-community==0.3.7
+langchain-core==0.3.18
+langchain-text-splitters==0.3.2
+# LlamaIndex Framework
+llama-index==0.11.14
+llama-index-core==0.11.14
+llama-index-embeddings-openai==0.2.5
+llama-index-llms-openai==0.2.9
+llama-index-vector-stores-mongodb==0.2.0
+llama-index-readers-file==0.2.2
+
+# OpenAI & Tokenization
+openai==1.57.4
+tiktoken==0.8.0
+
+# Database & Storage
+pymongo==4.8.0
+
+# Document Processing
+pypdf==4.3.1
+
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+starlette==0.38.6
+
+# Data Validation
+pydantic==2.9.2
+pydantic-settings==2.5.2
 
 # Configuration
-python-dotenv>=1.0.0,<2.0.0
-
-# Web framework
-fastapi>=0.100.0,<1.0.0
-uvicorn>=0.20.0,<1.0.0
-python-multipart>=0.0.6,<1.0.0
-
-# Data validation
-pydantic>=2.5.0,<3.0.0
-python-decouple>=3.8
-
-# LlamaIndex packages
-llama-index>=0.10.0,<0.12.0
-llama-index-core>=0.10.0,<0.12.0
-llama-index-embeddings-openai>=0.1.0,<0.3.0
-llama-index-llms-openai>=0.1.0,<0.3.0
-llama-index-vector-stores-mongodb>=0.1.0,<0.3.0
-llama-index-readers-file>=0.1.0,<0.3.0
-
-# OpenAI and tokenization (let pip resolve compatible versions)
-tiktoken
-openai
+python-dotenv==1.0.1
+python-decouple==3.8
 
 # Utilities
-numpy>=1.24.0,<2.0.0
-requests>=2.28.0,<3.0.0
+numpy==1.26.4
+requests==2.32.3
+typing-extensions==4.12.2
 
-# RAG Evaluation
-trulens>=2.4.0
-trulens-providers-openai>=2.4.0
+# RAG Evaluation (LangSmith)
+# Note: Version constrained by langchain compatibility (requires <0.2.0)
+langsmith==0.1.147
+
+# Logging (Basic)
+python-json-logger==2.0.7
+
+# ----------------------------------------------------------------------------
+# OPTIONAL PRODUCTION FEATURES (Uncomment to enable)
+# ----------------------------------------------------------------------------
+
+# Caching (Recommended for production - saves API costs)
+# redis==5.1.1
+# hiredis==3.0.0
+# cachetools==5.5.0
+
+# Async Support (For better performance)
+# motor==3.5.1
+# aiohttp==3.10.5
+
+# Security & Authentication (Enable for production)
+# python-jose[cryptography]==3.3.0
+# passlib[bcrypt]==1.7.4
+
+# Rate Limiting (Recommended for production)
+# slowapi==0.1.9
+
+# Retry Logic (Improves reliability)
+# tenacity==9.0.0
+
+# Advanced Logging
+# structlog==24.4.0
+
+# Advanced PDF Processing
+# pdfplumber==0.11.4
+
+# Monitoring & Observability
+# prometheus-client==0.21.0
+# psutil==6.0.0
+# sentry-sdk[fastapi]==2.15.0
+
+# Distributed Tracing
+# opentelemetry-api==1.27.0
+# opentelemetry-sdk==1.27.0
+# opentelemetry-instrumentation-fastapi==0.48b0
+
+# ----------------------------------------------------------------------------
+# DEVELOPMENT DEPENDENCIES (Uncomment for development)
+# ----------------------------------------------------------------------------
+
+# Testing Framework
+# pytest==8.3.3
+# pytest-asyncio==0.24.0
+# pytest-cov==5.0.0
+# pytest-mock==3.14.0
+# pytest-xdist==3.6.1
+# httpx==0.27.2
+# faker==30.3.0
+
+# Code Quality
+# black==24.8.0
+# flake8==7.1.1
+# mypy==1.11.2
+# isort==5.13.2
+# pylint==3.3.1
+# bandit==1.7.10
+
+# Development Tools
+# pre-commit==3.8.0
+# ipython==8.28.0
+# ipdb==0.13.13
+
+# Performance Testing
+# locust==2.32.2
+
+# ----------------------------------------------------------------------------
+# INSTALLATION INSTRUCTIONS
+# ----------------------------------------------------------------------------
+# 
+# Minimal Install (Core features only):
+#   pip install -r requirements.txt
+#
+# Production Install (with caching, security, monitoring):
+#   Uncomment the "Optional Production Features" section above
+#   pip install -r requirements.txt
+#
+# Development Install (everything):
+#   Uncomment both "Optional Production" and "Development" sections
+#   pip install -r requirements.txt
+#
+# Quick Dev Setup:
+#   pip install -r requirements.txt
+#   pip install pytest black flake8 mypy
+#
+# ----------------------------------------------------------------------------

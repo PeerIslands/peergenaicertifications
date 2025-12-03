@@ -1,5 +1,26 @@
 """
-LlamaIndex-based document processing utilities for enhanced PDF loading and indexing.
+LlamaIndex-based Document Processing Utilities.
+
+This module provides enhanced PDF loading and indexing using LlamaIndex framework.
+It uses Sentence Window Node Parser for better context retrieval compared to
+simple chunking strategies.
+
+Key Features:
+    - Sentence-based chunking (preserves semantic boundaries)
+    - Window-based context expansion
+    - Integration with MongoDB vector store
+    - Support for both single files and directories
+
+Classes:
+    LlamaIndexProcessor: Main processor class for LlamaIndex-based document handling.
+
+Example:
+    ```python
+    processor = LlamaIndexProcessor()
+    documents = processor.load_pdf("document.pdf")
+    nodes = processor.create_nodes(documents)
+    index = processor.create_index(documents, storage_context)
+    ```
 """
 import os
 from typing import List, Optional, Dict, Any
@@ -18,46 +39,109 @@ from llama_index.core.storage.storage_context import StorageContext
 from ..config.settings import settings
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 class LlamaIndexProcessor:
-    """Enhanced document processor using LlamaIndex for better ingestion and indexing."""
+    """
+    Enhanced Document Processor using LlamaIndex Framework.
+    
+    This processor uses LlamaIndex's advanced features including:
+    - Sentence Window Node Parser: Splits documents by sentences and creates
+      context windows around each sentence for better retrieval
+    - OpenAI embeddings: For generating vector representations
+    - MongoDB vector store: For persistent storage of embeddings
+    
+    Unlike simple chunking, the Sentence Window approach:
+    1. Splits text into individual sentences
+    2. Creates small nodes for each sentence
+    3. Expands context with surrounding sentences (window)
+    4. Stores both the sentence and expanded context
+    
+    Attributes:
+        node_parser (SentenceWindowNodeParser): Parser for creating sentence-based nodes.
+        pdf_reader (PDFReader): Reader for loading PDF files.
+    
+    Example:
+        ```python
+        processor = LlamaIndexProcessor()
+        result = processor.process_pdf("document.pdf", "original.pdf")
+        print(f"Created {len(result['nodes'])} nodes")
+        ```
+    """
     
     def __init__(self):
-        """Initialize the LlamaIndex processor with OpenAI and MongoDB."""
+        """
+        Initialize the LlamaIndex processor with OpenAI and MongoDB configuration.
         
-        # Configure LlamaIndex global settings - non-deprecated approach
-        # Use actual model names from environment variables
-        Settings.llm = OpenAI(
-            model=settings.llm_model,  # This will use gpt-3.5-turbo from your .env
-            temperature=settings.temperature,
-            max_tokens=settings.max_tokens,
-            api_key=settings.openai_api_key
-        )
+        Sets up:
+        - OpenAI LLM for text generation
+        - OpenAI Embeddings for vector generation
+        - Sentence Window Node Parser for intelligent text splitting
         
-        # Use the actual embedding model from environment variables
-        Settings.embed_model = OpenAIEmbedding(
-            model=settings.embedding_model,  # This will use text-embedding-ada-002 from your .env
-            api_key=settings.openai_api_key
-        )
+        Raises:
+            ValueError: If OpenAI API key is not configured.
+            Exception: If LlamaIndex initialization fails.
         
-        # Initialize Sentence Window Node Parser for better context retrieval
-        # Note: SentenceWindowNodeParser splits by sentences, NOT by chunk_size/chunk_overlap
-        # It creates small sentence nodes and uses window_size for context expansion
-        self.node_parser = SentenceWindowNodeParser.from_defaults(
-            window_size=settings.sentence_window_size,  # Number of sentences before/after (default: 3)
-            window_metadata_key="window",
-            original_text_metadata_key="original_text"
-        )
+        Note:
+            Global Settings are configured for LlamaIndex. This affects all
+            LlamaIndex operations in the application.
+        """
+        if not settings.openai_api_key:
+            raise ValueError("OPENAI_API_KEY is required for LlamaIndex processor")
         
-        logger.info(f"Sentence Window Node Parser initialized (window_size={settings.sentence_window_size})")
-        
-        # Initialize PDF reader
-        self.pdf_reader = PDFReader()
-        
-        logger.info("LlamaIndex processor initialized successfully")
+        try:
+            # Configure LlamaIndex global settings - non-deprecated approach
+            # Use actual model names from environment variables
+            
+            # Workaround for Pydantic v1/v2 compatibility issues
+            # Import langchain before llama-index to avoid validation conflicts
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message=".*pydantic.*")
+                warnings.filterwarnings("ignore", message=".*arbitrary_types_allowed.*")
+                
+                Settings.llm = OpenAI(
+                    model=settings.llm_model,
+                    temperature=settings.temperature,
+                    max_tokens=settings.max_tokens,
+                    api_key=settings.openai_api_key
+                )
+                
+                # Use the actual embedding model from environment variables
+                Settings.embed_model = OpenAIEmbedding(
+                    model=settings.embedding_model,
+                    api_key=settings.openai_api_key
+                )
+            
+            # Initialize Sentence Window Node Parser for better context retrieval
+            # Note: SentenceWindowNodeParser splits by sentences, NOT by chunk_size/chunk_overlap
+            # It creates small sentence nodes and uses window_size for context expansion
+            self.node_parser = SentenceWindowNodeParser.from_defaults(
+                window_size=settings.sentence_window_size,
+                window_metadata_key="window",
+                original_text_metadata_key="original_text"
+            )
+            
+            logger.info(
+                f"Sentence Window Node Parser initialized "
+                f"(window_size={settings.sentence_window_size})"
+            )
+            
+            # Initialize PDF reader
+            self.pdf_reader = PDFReader()
+            
+            logger.info(
+                f"LlamaIndex processor initialized successfully "
+                f"(LLM: {settings.llm_model}, Embedding: {settings.embedding_model})"
+            )
+            
+        except Exception as e:
+            logger.error(
+                f"Failed to initialize LlamaIndex processor: {str(e)}",
+                exc_info=True
+            )
+            raise
     
     def load_pdf(self, file_path: str, original_filename: Optional[str] = None) -> List[Document]:
         """

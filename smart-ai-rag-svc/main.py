@@ -1,6 +1,15 @@
 """
 Main FastAPI application for the RAG service.
 """
+# Suppress warnings BEFORE any imports
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*pkg_resources.*", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*LangChainDeprecationWarning.*")
+warnings.filterwarnings("ignore", message=".*Context is being overwritten.*")
+warnings.filterwarnings("ignore", message=".*Secret keys may be written.*")
+warnings.filterwarnings("ignore", category=UserWarning, module="munch")
+
 import logging
 from datetime import datetime
 from typing import List, Dict, Any
@@ -23,6 +32,12 @@ from src.models.schemas import (
 from src.config.settings import settings
 from src.utils.rag_evaluator import RAGEvaluator
 
+# Suppress deprecation warnings from dependencies
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
+warnings.filterwarnings("ignore", message=".*pkg_resources.*", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*LangChainDeprecationWarning.*")
+warnings.filterwarnings("ignore", message=".*Context is being overwritten.*")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,14 +56,43 @@ async def lifespan(app: FastAPI):
     logger.info("Starting services...")
     try:
         rag_service = EnhancedRAGService()
-        logger.info("✅ Enhanced RAG service with LlamaIndex initialized successfully")
+        if rag_service._llamaindex_available:
+            logger.info("Enhanced RAG service initialized (LlamaIndex + LangChain available)")
+        else:
+            logger.info("Enhanced RAG service initialized (LangChain only - set OPENAI_API_KEY for LlamaIndex)")
         
-        # Initialize RAG evaluator
-        rag_evaluator = RAGEvaluator()
-        logger.info("✅ RAG Evaluator initialized successfully")
+        # Initialize RAG evaluator (optional - requires OpenAI API key)
+        # Reuse LLM from rag_service if available to avoid initialization issues
+        try:
+            if settings.openai_api_key and rag_service and rag_service.llm:
+                # Reuse LLM from rag_service to avoid ChatOpenAI initialization issues
+                rag_evaluator = RAGEvaluator(llm=rag_service.llm)
+                if rag_evaluator._available:
+                    logger.info("LangSmith RAG Evaluator initialized successfully (reusing LLM)")
+                else:
+                    logger.warning("RAG Evaluator initialized but not fully available")
+            elif settings.openai_api_key:
+                # Try to create evaluator with new LLM
+                try:
+                    rag_evaluator = RAGEvaluator()
+                    if rag_evaluator._available:
+                        logger.info("LangSmith RAG Evaluator initialized successfully")
+                    else:
+                        logger.warning("RAG Evaluator initialized but not fully available")
+                except Exception:
+                    logger.warning("RAG Evaluator initialization failed")
+                    rag_evaluator = None
+            else:
+                logger.warning("RAG Evaluator not initialized (OPENAI_API_KEY required)")
+                rag_evaluator = None
+        except Exception as eval_error:
+            logger.warning(f"RAG Evaluator initialization failed: {str(eval_error)}")
+            rag_evaluator = None
     except Exception as e:
         logger.error(f"Failed to initialize services: {str(e)}")
-        raise
+        # Don't raise - allow app to start even if some services fail
+        # This allows health checks and basic functionality
+        logger.warning("Application starting with limited functionality")
     
     yield
     
@@ -56,12 +100,81 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down services...")
 
 
-# Create FastAPI app
+# Create FastAPI app with comprehensive OpenAPI documentation
 app = FastAPI(
     title="Smart AI RAG Service",
-    description="A Retrieval-Augmented Generation service using LangChain, OpenAI, and MongoDB Vector Search",
-    version="1.0.0",
-    lifespan=lifespan
+    description="""
+    ## Smart AI RAG (Retrieval-Augmented Generation) Service
+    
+    A production-ready RAG service that combines **LangChain** and **LlamaIndex** frameworks
+    for intelligent document processing and question answering.
+    
+    ### Key Features
+    
+    * **Document Processing**: Upload and index PDF documents
+    * **AI-Powered Q&A**: Ask questions and get intelligent answers
+    * **Vector Search**: MongoDB Atlas vector search for semantic retrieval
+    * **Quality Evaluation**: LangSmith-based RAG quality assessment
+    * **Conversation History**: Maintain context across multiple questions
+    
+    ### Frameworks
+    
+    * **LangChain**: Traditional document processing and chunking
+    * **LlamaIndex**: Advanced sentence-window based processing (recommended)
+    * **OpenAI**: GPT models for text generation and embeddings
+    * **MongoDB Atlas**: Vector database for document storage
+    
+    ### Quick Start
+    
+    1. Upload a PDF document: `POST /documents/upload-file`
+    2. Ask a question: `POST /questions/ask`
+    3. Evaluate quality: `POST /evaluate/query`
+    
+    ### Authentication
+    
+    Currently open access. Production deployments should implement API key authentication.
+    """,
+    version="2.0.0",
+    lifespan=lifespan,
+    contact={
+        "name": "Smart AI RAG Service",
+        "url": "https://github.com/your-org/smart-ai-rag-svc",
+    },
+    license_info={
+        "name": "MIT",
+    },
+    servers=[
+        {
+            "url": "http://localhost:8000",
+            "description": "Development server"
+        },
+        {
+            "url": "https://api.yourdomain.com",
+            "description": "Production server"
+        }
+    ],
+    tags_metadata=[
+        {
+            "name": "health",
+            "description": "Health check and service status endpoints.",
+        },
+        {
+            "name": "documents",
+            "description": "Document upload and management operations. Upload PDF files to index them for retrieval.",
+        },
+        {
+            "name": "questions",
+            "description": "Question answering endpoints. Ask questions and get AI-generated answers based on indexed documents.",
+        },
+        {
+            "name": "conversation",
+            "description": "Conversation history management. Track and manage multi-turn conversations.",
+        },
+        {
+            "name": "evaluation",
+            "description": "RAG quality evaluation using LangSmith metrics. Assess answer relevance, context relevance, and groundedness.",
+        },
+    ],
 )
 
 # Add CORS middleware
@@ -74,18 +187,46 @@ app.add_middleware(
 )
 
 
-@app.get("/", response_model=HealthCheckResponse)
+@app.get(
+    "/",
+    response_model=HealthCheckResponse,
+    tags=["health"],
+    summary="Root endpoint",
+    description="Returns basic service information and health status.",
+    response_description="Service health status and version information"
+)
 async def root():
-    """Root endpoint with basic service information."""
+    """
+    Root endpoint with basic service information.
+    
+    Returns:
+        HealthCheckResponse: Service status and version
+    """
     return HealthCheckResponse(
         status="healthy",
         timestamp=datetime.now().isoformat()
     )
 
 
-@app.get("/health", response_model=HealthCheckResponse)
+@app.get(
+    "/health",
+    response_model=HealthCheckResponse,
+    tags=["health"],
+    summary="Health check",
+    description="Check if the service is running and healthy. Used by load balancers and monitoring systems.",
+    response_description="Service health status"
+)
 async def health_check():
-    """Health check endpoint."""
+    """
+    Health check endpoint for monitoring and load balancers.
+    
+    Returns:
+        HealthCheckResponse: Current health status
+        
+    Note:
+        This endpoint performs a basic health check. For detailed dependency
+        checks, use the /health/ready endpoint (if implemented).
+    """
     try:
         # Basic health check - could be extended to check database connectivity
         return HealthCheckResponse(
@@ -100,16 +241,41 @@ async def health_check():
         )
 
 
-@app.post("/documents/upload-file", response_model=DocumentUploadResponse)
-async def upload_file(file: UploadFile = File(...), use_llamaindex: bool = True):
+@app.post(
+    "/documents/upload-file",
+    response_model=DocumentUploadResponse,
+    tags=["documents"],
+    summary="Upload PDF file",
+    description="""
+    Upload a PDF file directly through the API.
+    
+    The file will be:
+    1. Validated (must be a PDF)
+    2. Processed and chunked
+    3. Embedded using OpenAI embeddings
+    4. Indexed in MongoDB vector store
+    
+    **Recommended**: Use `use_llamaindex=True` for better processing.
+    """,
+    response_description="Upload and indexing results with statistics"
+)
+async def upload_file(
+    file: UploadFile = File(..., description="PDF file to upload and index"),
+    use_llamaindex: bool = True
+):
     """
     Upload and index a PDF file directly.
     
-    Upload a PDF file and it will be processed and indexed automatically.
-    
     Args:
-        file: PDF file to upload
-        use_llamaindex: Whether to use LlamaIndex (True) or LangChain (False) for processing
+        file: PDF file to upload (multipart/form-data)
+        use_llamaindex: Whether to use LlamaIndex (True, recommended) or LangChain (False)
+    
+    Returns:
+        DocumentUploadResponse: Upload results with statistics
+        
+    Raises:
+        400: If file is not a PDF
+        500: If processing fails
     """
     try:
         # Validate file type
@@ -162,16 +328,46 @@ async def upload_file(file: UploadFile = File(...), use_llamaindex: bool = True)
         )
 
 
-@app.post("/documents/upload-path", response_model=DocumentUploadResponse)
-async def upload_documents_by_path(request: DocumentUploadRequest, use_llamaindex: bool = True):
+@app.post(
+    "/documents/upload-path",
+    response_model=DocumentUploadResponse,
+    tags=["documents"],
+    summary="Upload documents by file path",
+    description="""
+    Upload and index PDF documents by providing a file system path.
+    
+    **Use Cases:**
+    - Server-side file processing
+    - Batch document indexing
+    - Automated document ingestion
+    
+    **Note:** This endpoint requires the file to be accessible from the server.
+    For client uploads, use `/documents/upload-file` instead.
+    
+    **Processing Options:**
+    - Single file: Provide `file_path`
+    - Multiple files: Provide `directory_path` (all PDFs in directory)
+    """,
+    response_description="Upload and indexing results"
+)
+async def upload_documents_by_path(
+    request: DocumentUploadRequest,
+    use_llamaindex: bool = True
+):
     """
     Upload and index PDF documents by file path.
     
-    Provide either file_path for a single PDF or directory_path for multiple PDFs.
-    
     Args:
         request: Document upload request with file or directory path
-        use_llamaindex: Whether to use LlamaIndex (True) or LangChain (False) for processing
+        use_llamaindex: Whether to use LlamaIndex (True, recommended) or LangChain (False)
+    
+    Returns:
+        DocumentUploadResponse: Upload results with statistics
+        
+    Raises:
+        400: If neither path is provided or both are provided
+        404: If file or directory doesn't exist
+        500: If processing fails
     """
     try:
         if not request.file_path and not request.directory_path:
@@ -213,14 +409,49 @@ async def upload_documents_by_path(request: DocumentUploadRequest, use_llamainde
         )
 
 
-@app.post("/questions/ask", response_model=QuestionResponse)
-async def ask_question(request: QuestionRequest, use_llamaindex: bool = True):
+@app.post(
+    "/questions/ask",
+    response_model=QuestionResponse,
+    tags=["questions"],
+    summary="Ask a question",
+    description="""
+    Ask a question and get an AI-generated answer based on indexed documents.
+    
+    The service will:
+    1. Retrieve relevant document chunks using vector similarity search
+    2. Generate an answer using the configured LLM (GPT-3.5-turbo or GPT-4)
+    3. Return the answer with source citations
+    
+    **Use Cases:**
+    - Document Q&A: "What skills does the candidate have?"
+    - Information extraction: "What is the candidate's experience?"
+    - Summarization: "Summarize the main points"
+    """,
+    response_description="AI-generated answer with source citations"
+)
+async def ask_question(
+    request: QuestionRequest,
+    use_llamaindex: bool = True
+):
     """
     Ask a question and get an AI-generated answer based on indexed documents.
     
     Args:
         request: Question request with question text and options
-        use_llamaindex: Whether to use LlamaIndex (True) or LangChain (False) for querying
+        use_llamaindex: Whether to use LlamaIndex (True, recommended) or LangChain (False)
+    
+    Returns:
+        QuestionResponse: Answer with sources and metadata
+        
+    Example Request:
+        ```json
+        {
+            "question": "What is the main topic?",
+            "k": 5,
+            "use_conversation_history": false,
+            "use_llamaindex": true
+        }
+        ```
     """
     try:
         logger.info(f"Processing question: {request.question[:100]}... (LlamaIndex: {use_llamaindex})")
@@ -260,9 +491,34 @@ async def ask_question(request: QuestionRequest, use_llamaindex: bool = True):
         )
 
 
-@app.get("/conversation/history", response_model=List[ConversationMessage])
+@app.get(
+    "/conversation/history",
+    response_model=List[ConversationMessage],
+    tags=["conversation"],
+    summary="Get conversation history",
+    description="""
+    Retrieve the current conversation history.
+    
+    Returns all messages in the conversation, including both user questions
+    and AI responses. Useful for:
+    - Displaying chat history in UI
+    - Debugging conversation flow
+    - Analyzing conversation patterns
+    """,
+    response_description="List of conversation messages"
+)
 async def get_conversation_history():
-    """Get the current conversation history."""
+    """
+    Get the current conversation history.
+    
+    Returns:
+        List[ConversationMessage]: All messages in the conversation
+        
+    Note:
+        Conversation history is stored in memory and cleared on service restart.
+        Use this endpoint to retrieve history before asking follow-up questions
+        with `use_conversation_history=True`.
+    """
     try:
         history = rag_service.get_conversation_history()
         return [ConversationMessage(**msg) for msg in history]
@@ -275,9 +531,30 @@ async def get_conversation_history():
         )
 
 
-@app.delete("/conversation/history")
+@app.delete(
+    "/conversation/history",
+    tags=["conversation"],
+    summary="Clear conversation history",
+    description="""
+    Clear all conversation history.
+    
+    Removes all stored conversation messages from memory. Useful for:
+    - Starting a new conversation session
+    - Resetting context
+    - Privacy compliance (clearing user data)
+    """,
+    response_description="Confirmation message"
+)
 async def clear_conversation_history():
-    """Clear the conversation history."""
+    """
+    Clear the conversation history.
+    
+    Returns:
+        dict: Success message
+        
+    Note:
+        This operation cannot be undone. All conversation context will be lost.
+    """
     try:
         rag_service.clear_conversation_history()
         return {"message": "Conversation history cleared successfully"}
@@ -290,9 +567,27 @@ async def clear_conversation_history():
         )
 
 
-@app.get("/stats", response_model=ServiceStatsResponse)
+@app.get(
+    "/stats",
+    response_model=ServiceStatsResponse,
+    tags=["health"],
+    summary="Get service statistics",
+    description="Returns detailed statistics about the service including configuration, model information, and vector store status.",
+    response_description="Service statistics and configuration"
+)
 async def get_service_stats():
-    """Get service statistics and configuration."""
+    """
+    Get service statistics and configuration.
+    
+    Returns information about:
+    - LLM and embedding models in use
+    - Document processing configuration
+    - Vector store statistics
+    - Available processing approaches
+    
+    Returns:
+        ServiceStatsResponse: Comprehensive service statistics
+    """
     try:
         stats = rag_service.get_service_stats()
         
@@ -404,16 +699,52 @@ def _get_quality_recommendations(metrics: dict) -> list:
     return recommendations
 
 
-@app.post("/evaluate/rag", response_model=EvaluationResponse)
+@app.post(
+    "/evaluate/rag",
+    response_model=EvaluationResponse,
+    tags=["evaluation"],
+    summary="Evaluate RAG response quality",
+    description="""
+    Evaluate the quality of a RAG response using LangSmith evaluation framework.
+    
+    **Metrics Evaluated:**
+    
+    1. **Answer Relevance** (0.0-1.0)
+       - Measures how well the answer addresses the question
+       - Higher = more directly relevant
+    
+    2. **Context Relevance** (0.0-1.0)
+       - Measures how relevant retrieved chunks are to the question
+       - Higher = better retrieval quality
+    
+    3. **Groundedness** (0.0-1.0)
+       - Measures if answer claims are supported by context
+       - Lower = potential hallucination
+    
+    4. **Overall Quality** (0.0-1.0)
+       - Weighted average of all metrics
+       - >0.8 = Excellent, >0.6 = Good, <0.4 = Needs improvement
+    """,
+    response_description="Evaluation metrics and quality scores"
+)
 async def evaluate_rag(request: EvaluationRequest):
     """
-    Evaluate RAG response quality using TruLens metrics.
+    Evaluate RAG response quality using LangSmith evaluation framework.
     
-    Metrics:
-    - Answer Relevance: How relevant is the answer to the question?
-    - Context Relevance: How relevant is the retrieved context?
-    - Groundedness: Is the answer grounded in the context?
-    - Overall Quality: Combined quality score
+    Args:
+        request: Evaluation request with question, answer, and context
+        
+    Returns:
+        EvaluationResponse: Detailed quality metrics and statistics
+        
+    Example:
+        ```json
+        {
+            "question": "What is AI?",
+            "answer": "AI is artificial intelligence...",
+            "context": ["AI is...", "Machine learning..."]
+        }
+        ```
     """
     if rag_evaluator is None:
         raise HTTPException(
@@ -465,83 +796,54 @@ async def evaluate_rag(request: EvaluationRequest):
         )
 
 
-@app.post("/evaluate/rag-from-query")
-async def evaluate_from_query(
-    question: str = Form(...),
-    use_llamaindex: bool = Form(True)
-):
-    """
-    Ask a question, get an answer, and evaluate the response quality in one step.
+@app.post(
+    "/evaluate/query",
+    tags=["evaluation"],
+    summary="Ask question and evaluate quality",
+    description="""
+    Ask a question, get an AI-generated answer, and evaluate the response quality in one step.
     
-    **DEPRECATED:** Use POST /evaluate/query instead (accepts JSON).
-    This endpoint uses form-data for compatibility with file upload patterns.
-    """
-    if rag_service is None or rag_evaluator is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Services not initialized"
-        )
+    This is the **recommended** endpoint for quality evaluation. It combines:
+    1. **Question Processing**: Retrieves relevant documents and generates answer
+    2. **Quality Evaluation**: Assesses answer using LangSmith evaluation metrics
+    3. **Recommendations**: Provides actionable improvement suggestions
     
-    try:
-        logger.info(f"Processing and evaluating question: {question[:50]}...")
-        
-        # Get answer from RAG service
-        result = rag_service.ask_question(
-            question=question,
-            use_llamaindex=use_llamaindex,
-            use_conversation_history=False
-        )
-        
-        # Extract context from sources
-        context = [source.get('content_preview', '') for source in result.get('sources', [])]
-        
-        # Evaluate the response
-        evaluation = rag_evaluator.evaluate_rag_response(
-            question=question,
-            answer=result.get('answer', ''),
-            context=context,
-            source_info=result.get('sources')
-        )
-        
-        # Combine results with structured summary
-        metrics = evaluation.get('metrics', {})
-        combined_result = {
-            "rag_response": result,
-            "evaluation": evaluation,
-            "summary": {
-                "quality_metrics": metrics,
-                "context_statistics": evaluation.get('context_stats', {}),
-                "evaluation_time_seconds": evaluation.get('evaluation_time', 0),
-                "timestamp": evaluation.get('timestamp', ''),
-                "quality_assessment": _get_quality_assessment(metrics.get('overall_quality', 0)),
-                "recommendations": _get_quality_recommendations(metrics)
-            },
-            "summary_text": rag_evaluator.get_evaluation_summary(evaluation)
-        }
-        
-        return combined_result
-        
-    except Exception as e:
-        logger.error(f"Query and evaluation failed: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process and evaluate question: {str(e)}"
-        )
-
-
-@app.post("/evaluate/query")
+    **Response includes:**
+    - RAG answer with sources
+    - Quality metrics (relevance, groundedness, etc.)
+    - Quality assessment (Excellent/Good/Fair/Poor)
+    - Improvement recommendations
+    - Formatted evaluation summary
+    
+    **Use Cases:**
+    - Quality monitoring in production
+    - A/B testing different configurations
+    - Debugging poor responses
+    - Continuous improvement workflows
+    """,
+    response_description="Combined RAG response and evaluation results"
+)
 async def evaluate_query_json(request: QuestionRequest):
     """
     Ask a question, get an answer, and evaluate the response quality (JSON version).
     
-    This is the JSON-friendly version of /evaluate/rag-from-query.
-    
-    Example:
+    Args:
+        request: Question request with question text and options
+        
+    Returns:
+        dict: Combined results containing:
+        - rag_response: The answer and sources
+        - evaluation: Quality metrics and statistics
+        - summary: Quality assessment and recommendations
+        - summary_text: Human-readable evaluation summary
+        
+    Example Request:
     ```json
     {
-      "question": "How many years of experience does gokul have?",
-      "use_llamaindex": true,
-      "k": 5
+            "question": "What skills does the candidate have?",
+            "k": 5,
+            "use_conversation_history": false,
+            "use_llamaindex": true
     }
     ```
     """

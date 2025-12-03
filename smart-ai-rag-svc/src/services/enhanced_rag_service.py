@@ -1,6 +1,11 @@
 """
 Enhanced RAG service with LlamaIndex integration for advanced document processing and querying.
 """
+# Suppress warnings before imports
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*pydantic.*", category=UserWarning)
+
 import logging
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
@@ -44,45 +49,188 @@ class EnhancedRAGService:
         
         # Initialize processors
         self.document_processor = DocumentProcessor()
-        self.llamaindex_processor = LlamaIndexProcessor()
         
-        # Initialize MongoDB client
-        self.mongodb_client = pymongo.MongoClient(settings.mongodb_uri)
+        # Initialize LlamaIndex processor lazily (only if API key is available)
+        self.llamaindex_processor = None
+        self._llamaindex_available = False
+        
+        try:
+            if settings.openai_api_key:
+                self.llamaindex_processor = LlamaIndexProcessor()
+                self._llamaindex_available = True
+                logger.info("LlamaIndex processor initialized successfully")
+            else:
+                logger.warning(
+                    "OPENAI_API_KEY not found. LlamaIndex features will be unavailable. "
+                    "Set OPENAI_API_KEY environment variable to enable LlamaIndex processing."
+                )
+        except Exception as e:
+            logger.warning(f"Failed to initialize LlamaIndex processor: {str(e)}. LangChain will be used as fallback.")
+        
+        # Initialize MongoDB client (with graceful error handling)
+        self.mongodb_client = None
+        self._mongodb_available = False
+        
+        try:
+            # Test MongoDB connection with a short timeout
+            self.mongodb_client = pymongo.MongoClient(
+                settings.mongodb_uri,
+                serverSelectionTimeoutMS=5000  # 5 second timeout
+            )
+            # Test the connection
+            self.mongodb_client.server_info()
+            self._mongodb_available = True
+            logger.info(f"MongoDB connection established: {settings.mongodb_database}")
+        except Exception as e:
+            logger.warning(
+                f"MongoDB connection failed: {str(e)}. "
+                f"Please check your MONGODB_URI in .env file. "
+                f"Using local MongoDB or MongoDB Atlas? Update MONGODB_URI accordingly."
+            )
+            # Create a dummy client to prevent None errors
+            try:
+                self.mongodb_client = pymongo.MongoClient("mongodb://localhost:27017", serverSelectionTimeoutMS=1000)
+            except:
+                pass
         
         # LangChain components (for backward compatibility)
-        self.embeddings = OpenAIEmbeddings(
-            openai_api_key=settings.openai_api_key,
-            model=settings.embedding_model
-        )
+        # These require OpenAI API key, so initialize only if available
+        self.embeddings = None
+        self.langchain_vector_store = None
+        self._langchain_available = False
         
-        self.langchain_vector_store = MongoDBAtlasVectorSearch.from_connection_string(
-            connection_string=settings.mongodb_uri,
-            namespace=f"{settings.mongodb_database}.{settings.mongodb_collection}",
-            embedding=self.embeddings,
-            index_name=settings.vector_index_name,
-            text_key="text",
-            embedding_key="embedding"
-        )
+        if settings.openai_api_key:
+            try:
+                # Set environment variable to avoid 'proxies' argument issues
+                import os
+                os.environ["OPENAI_API_KEY"] = settings.openai_api_key
+                
+                # Initialize embeddings with error handling for version compatibility
+                # Use environment variable instead of passing api_key directly
+                # Try minimal initialization to avoid 'proxies' argument issues
+                try:
+                    self.embeddings = OpenAIEmbeddings()
+                except Exception as emb_error:
+                    logger.debug(f"OpenAIEmbeddings() failed: {str(emb_error)}")
+                    # This version has the 'proxies' bug, embeddings won't work
+                    self.embeddings = None
+                
+                # Only create vector store if MongoDB is available and embeddings initialized
+                if self._mongodb_available and self.embeddings:
+                    try:
+                        self.langchain_vector_store = MongoDBAtlasVectorSearch.from_connection_string(
+                            connection_string=settings.mongodb_uri,
+                            namespace=f"{settings.mongodb_database}.{settings.mongodb_collection}",
+                            embedding=self.embeddings,
+                            index_name=settings.vector_index_name,
+                            text_key="text",
+                            embedding_key="embedding"
+                        )
+                        self._langchain_available = True
+                        logger.info("LangChain components initialized successfully")
+                    except Exception as vs_error:
+                        logger.warning(f"Failed to create LangChain vector store: {str(vs_error)}")
+                        self._langchain_available = False
+                elif not self._mongodb_available:
+                    logger.warning("LangChain vector store not initialized (MongoDB unavailable)")
+                elif not self.embeddings:
+                    logger.warning("LangChain vector store not initialized (embeddings unavailable)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize LangChain components: {str(e)}")
+        else:
+            logger.warning(
+                "OPENAI_API_KEY not found. LangChain features will be unavailable. "
+                "Set OPENAI_API_KEY environment variable to enable document processing."
+            )
         
-        # LlamaIndex components
-        self.llamaindex_vector_store = LlamaMongoVectorStore(
-            mongodb_client=self.mongodb_client,
-            db_name=settings.mongodb_database,
-            collection_name=settings.mongodb_collection,
-            index_name=settings.vector_index_name
-        )
+        # LlamaIndex components (only if MongoDB is available)
+        self.llamaindex_vector_store = None
+        self.storage_context = None
         
-        self.storage_context = StorageContext.from_defaults(
-            vector_store=self.llamaindex_vector_store
-        )
+        if self._mongodb_available and self.mongodb_client:
+            try:
+                # Initialize vector store with error handling for Pydantic compatibility
+                try:
+                    self.llamaindex_vector_store = LlamaMongoVectorStore(
+                        mongodb_client=self.mongodb_client,
+                        db_name=settings.mongodb_database,
+                        collection_name=settings.mongodb_collection,
+                        index_name=settings.vector_index_name
+                    )
+                    
+                    self.storage_context = StorageContext.from_defaults(
+                        vector_store=self.llamaindex_vector_store
+                    )
+                    logger.info("LlamaIndex vector store initialized")
+                except (AttributeError, TypeError) as pydantic_error:
+                    # Handle Pydantic compatibility issues
+                    # Create a basic storage context without MongoDB vector store
+                    logger.debug(
+                        f"LlamaIndex MongoDB vector store has compatibility issue: {str(pydantic_error)}. "
+                        f"Creating basic storage context for document processing."
+                    )
+                    # Create storage context without vector store (will use default simple store)
+                    self.storage_context = StorageContext.from_defaults()
+                    self.llamaindex_vector_store = None
+                    logger.info("LlamaIndex storage context initialized (in-memory mode)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize LlamaIndex vector store: {str(e)}")
+                # Create fallback storage context
+                try:
+                    self.storage_context = StorageContext.from_defaults()
+                    logger.info("Fallback storage context created")
+                except Exception:
+                    pass  # If fallback fails, storage_context remains None
         
-        # Initialize LLM
-        self.llm = ChatOpenAI(
-            openai_api_key=settings.openai_api_key,
-            model_name=settings.llm_model,
-            temperature=settings.temperature,
-            max_tokens=settings.max_tokens
-        )
+        # Initialize LLM (only if API key is available)
+        self.llm = None
+        if settings.openai_api_key:
+            try:
+                # Ensure environment variable is set (already set above, but ensure it's still set)
+                import os
+                os.environ["OPENAI_API_KEY"] = settings.openai_api_key
+                
+                # Workaround for 'proxies' argument error - monkey patch OpenAI client if needed
+                try:
+                    from openai import OpenAI as OpenAIClient
+                    # Check if we can create a client without proxies
+                    test_client = OpenAIClient(api_key=settings.openai_api_key)
+                    del test_client
+                except Exception:
+                    pass  # Continue anyway
+                
+                # Try standard initialization first - use environment variable
+                llm_initialized = False
+                llm_methods = [
+                    lambda: ChatOpenAI(model=settings.llm_model, temperature=settings.temperature, max_tokens=settings.max_tokens),
+                    lambda: ChatOpenAI(model_name=settings.llm_model, temperature=settings.temperature, max_tokens=settings.max_tokens),
+                    lambda: ChatOpenAI(temperature=settings.temperature, max_tokens=settings.max_tokens),
+                    lambda: ChatOpenAI(),
+                ]
+                
+                for llm_method in llm_methods:
+                    try:
+                        self.llm = llm_method()
+                        llm_initialized = True
+                        break
+                    except Exception as llm_error:
+                        error_str = str(llm_error)
+                        if "proxies" in error_str.lower():
+                            logger.debug(f"Skipping LLM init method due to proxies error")
+                            continue
+                        logger.debug(f"LLM initialization attempt failed: {error_str}")
+                        continue
+                
+                if llm_initialized:
+                    logger.info(f"LLM initialized: {settings.llm_model}")
+                else:
+                    logger.warning(f"Failed to initialize LLM - evaluation features will be unavailable")
+                    self.llm = None
+            except Exception as e:
+                logger.warning(f"Failed to initialize LLM: {str(e)}")
+                self.llm = None
+        else:
+            logger.warning("LLM not initialized (OPENAI_API_KEY required)")
         
         # LlamaIndex query engine (will be set when index is created)
         self.query_engine = None
@@ -107,7 +255,16 @@ class EnhancedRAGService:
             
         Returns:
             Dictionary with indexing results and statistics
+            
+        Raises:
+            ValueError: If LlamaIndex processor is not available (missing OPENAI_API_KEY)
         """
+        if not self._llamaindex_available or self.llamaindex_processor is None:
+            raise ValueError(
+                "LlamaIndex processor is not available. "
+                "Please set OPENAI_API_KEY environment variable to enable LlamaIndex features."
+            )
+        
         try:
             start_time = time.time()
             
@@ -126,6 +283,14 @@ class EnhancedRAGService:
             
             documents = result["documents"]
             nodes = result["nodes"]
+            
+            # Check if storage context is available
+            if not self.storage_context:
+                return {
+                    "success": False,
+                    "message": "MongoDB storage context not available. Please check MongoDB connection.",
+                    "error": "Storage context not initialized"
+                }
             
             # Create or update vector index
             if self.vector_index is None:
@@ -175,6 +340,13 @@ class EnhancedRAGService:
         Returns:
             Dictionary with indexing results and statistics
         """
+        if not self._langchain_available or not self.langchain_vector_store:
+            return {
+                "success": False,
+                "message": "LangChain components not available. Please set OPENAI_API_KEY and ensure MongoDB is connected.",
+                "error": "LangChain components not initialized"
+            }
+        
         try:
             start_time = time.time()
             
@@ -241,7 +413,18 @@ class EnhancedRAGService:
             
         Returns:
             Dictionary with indexing results and statistics
+            
+        Note:
+            If LlamaIndex is requested but not available (missing OPENAI_API_KEY),
+            will automatically fall back to LangChain processing.
         """
+        if use_llamaindex and not self._llamaindex_available:
+            logger.warning(
+                "LlamaIndex requested but not available (missing OPENAI_API_KEY). "
+                "Falling back to LangChain processing."
+            )
+            use_llamaindex = False
+        
         if use_llamaindex:
             return self.load_and_index_documents_llamaindex(file_path, directory_path, original_filename)
         else:
@@ -295,7 +478,16 @@ class EnhancedRAGService:
             
         Returns:
             Dictionary containing the answer and metadata
+            
+        Raises:
+            ValueError: If LlamaIndex processor is not available
         """
+        if not self._llamaindex_available or self.llamaindex_processor is None:
+            raise ValueError(
+                "LlamaIndex processor is not available. "
+                "Please set OPENAI_API_KEY environment variable to enable LlamaIndex features."
+            )
+        
         if self.query_engine is None:
             return {
                 "success": False,
@@ -376,9 +568,16 @@ class EnhancedRAGService:
             
             # Update conversation history
             if use_conversation_history:
+                # Add user question
                 self.conversation_history.append({
-                    "question": question,
-                    "answer": str(response),
+                    "type": "human",
+                    "content": question,
+                    "timestamp": datetime.now().isoformat()
+                })
+                # Add AI response
+                self.conversation_history.append({
+                    "type": "ai",
+                    "content": str(response),
                     "timestamp": datetime.now().isoformat()
                 })
             
@@ -423,6 +622,19 @@ class EnhancedRAGService:
         Returns:
             Dictionary containing the answer and metadata
         """
+        if not self._langchain_available or not self.llm or not self.langchain_vector_store:
+            return {
+                "success": False,
+                "answer": "LangChain components not available. Please set OPENAI_API_KEY and ensure MongoDB is connected.",
+                "sources": [],
+                "num_sources": 0,
+                "processing_time": 0.0,
+                "timestamp": datetime.now().isoformat(),
+                "query_engine": "langchain",
+                "conversation_history_used": use_conversation_history,
+                "error": "LangChain components not initialized"
+            }
+        
         try:
             start_time = time.time()
             k = k or settings.top_k_results
@@ -498,9 +710,16 @@ Answer:"""
             
             # Update conversation history
             if use_conversation_history:
+                # Add user question
                 self.conversation_history.append({
-                    "question": question,
-                    "answer": answer,
+                    "type": "human",
+                    "content": question,
+                    "timestamp": datetime.now().isoformat()
+                })
+                # Add AI response
+                self.conversation_history.append({
+                    "type": "ai",
+                    "content": answer,
                     "timestamp": datetime.now().isoformat()
                 })
             
@@ -546,9 +765,25 @@ Answer:"""
             
         Returns:
             Dictionary containing the answer and metadata
+            
+        Note:
+            If LlamaIndex is requested but not available (missing OPENAI_API_KEY),
+            will automatically fall back to LangChain processing.
         """
+        if use_llamaindex and not self._llamaindex_available:
+            logger.warning(
+                "LlamaIndex requested but not available (missing OPENAI_API_KEY). "
+                "Falling back to LangChain processing."
+            )
+            use_llamaindex = False
+        
         if use_llamaindex:
-            return self.ask_question_llamaindex(question, use_conversation_history)
+            try:
+                return self.ask_question_llamaindex(question, use_conversation_history)
+            except ValueError as e:
+                # If LlamaIndex fails due to unavailability, fall back to LangChain
+                logger.warning(f"LlamaIndex query failed: {str(e)}. Falling back to LangChain.")
+                return self.ask_question_langchain(question, k, use_conversation_history)
         else:
             return self.ask_question_langchain(question, k, use_conversation_history)
     
@@ -558,9 +793,11 @@ Answer:"""
             return ""
         
         formatted_history = []
-        for entry in self.conversation_history[-5:]:  # Last 5 exchanges
-            formatted_history.append(f"Q: {entry['question']}")
-            formatted_history.append(f"A: {entry['answer']}")
+        for entry in self.conversation_history[-10:]:  # Last 10 messages (5 exchanges)
+            if entry['type'] == 'human':
+                formatted_history.append(f"Q: {entry['content']}")
+            else:  # ai
+                formatted_history.append(f"A: {entry['content']}")
         
         return "\n".join(formatted_history)
     

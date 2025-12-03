@@ -1,8 +1,22 @@
 """
-Document processing utilities for PDF loading and text chunking.
+Document Processing Utilities for PDF Loading and Text Chunking.
+
+This module provides functionality for loading PDF documents and splitting them
+into smaller chunks suitable for vector embedding and retrieval. It uses
+LangChain's document loaders and text splitters for processing.
+
+Classes:
+    DocumentProcessor: Main class for PDF document processing and chunking.
+
+Example:
+    ```python
+    processor = DocumentProcessor()
+    documents = processor.process_pdf("document.pdf")
+    stats = processor.get_document_stats(documents)
+    ```
 """
 import os
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pathlib import Path
 import logging
 
@@ -13,23 +27,65 @@ from langchain_core.documents import Document
 from ..config.settings import settings
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
 class DocumentProcessor:
-    """Handles PDF document loading and text processing."""
+    """
+    Handles PDF document loading and text processing for RAG applications.
+    
+    This class provides methods to load PDF files, split them into chunks,
+    and process multiple documents. It uses LangChain's RecursiveCharacterTextSplitter
+    for intelligent text splitting that preserves semantic boundaries.
+    
+    Attributes:
+        chunk_size (int): Maximum size of each text chunk in characters.
+        chunk_overlap (int): Number of characters to overlap between chunks.
+        text_splitter (RecursiveCharacterTextSplitter): Text splitter instance.
+    
+    Example:
+        ```python
+        processor = DocumentProcessor(chunk_size=1000, chunk_overlap=200)
+        documents = processor.process_pdf("resume.pdf")
+        ```
+    """
     
     def __init__(self, chunk_size: Optional[int] = None, chunk_overlap: Optional[int] = None):
         """
-        Initialize the document processor.
+        Initialize the document processor with chunking configuration.
         
         Args:
-            chunk_size: Size of text chunks (defaults to settings value)
-            chunk_overlap: Overlap between chunks (defaults to settings value)
+            chunk_size: Size of text chunks in characters. If None, uses value
+                       from settings. Larger chunks preserve more context but
+                       may be less precise for retrieval.
+            chunk_overlap: Overlap between chunks in characters. If None, uses
+                          value from settings. Overlap helps maintain context
+                          across chunk boundaries.
+        
+        Raises:
+            ValueError: If chunk_size or chunk_overlap are invalid (negative or
+                       chunk_overlap >= chunk_size).
+        
+        Note:
+            The text splitter uses a hierarchical approach:
+            1. Split by double newlines (paragraphs)
+            2. Split by single newlines (sentences)
+            3. Split by spaces (words)
+            4. Split by characters (if needed)
         """
         self.chunk_size = chunk_size or settings.chunk_size
         self.chunk_overlap = chunk_overlap or settings.chunk_overlap
+        
+        # Validate chunk parameters
+        if self.chunk_size <= 0:
+            raise ValueError(f"chunk_size must be positive, got {self.chunk_size}")
+        if self.chunk_overlap < 0:
+            raise ValueError(f"chunk_overlap must be non-negative, got {self.chunk_overlap}")
+        if self.chunk_overlap >= self.chunk_size:
+            raise ValueError(
+                f"chunk_overlap ({self.chunk_overlap}) must be less than "
+                f"chunk_size ({self.chunk_size})"
+            )
         
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=self.chunk_size,
@@ -37,32 +93,68 @@ class DocumentProcessor:
             length_function=len,
             separators=["\n\n", "\n", " ", ""]
         )
+        
+        logger.info(
+            f"DocumentProcessor initialized: chunk_size={self.chunk_size}, "
+            f"chunk_overlap={self.chunk_overlap}"
+        )
     
     def load_pdf(self, file_path: str) -> List[Document]:
         """
-        Load a PDF file and extract text content.
+        Load a PDF file and extract text content from all pages.
+        
+        This method uses PyPDFLoader to extract text from each page of the PDF.
+        Each page becomes a separate Document object with metadata including
+        the source file path and page number.
         
         Args:
-            file_path: Path to the PDF file
+            file_path: Path to the PDF file. Can be absolute or relative.
             
         Returns:
-            List of Document objects containing the extracted text
+            List of Document objects, one per page. Each Document contains:
+            - page_content: Extracted text from the page
+            - metadata: Dict with 'source' (file path) and 'page' (page number)
             
         Raises:
-            FileNotFoundError: If the PDF file doesn't exist
-            Exception: If there's an error loading the PDF
+            FileNotFoundError: If the PDF file doesn't exist at the given path.
+            ValueError: If the file is not a valid PDF.
+            Exception: For other errors during PDF loading (corrupted file, etc.).
+        
+        Example:
+            ```python
+            documents = processor.load_pdf("resume.pdf")
+            print(f"Loaded {len(documents)} pages")
+            print(documents[0].page_content[:100])  # First 100 chars
+            ```
         """
         if not os.path.exists(file_path):
+            logger.error(f"PDF file not found: {file_path}")
             raise FileNotFoundError(f"PDF file not found: {file_path}")
         
+        if not file_path.lower().endswith('.pdf'):
+            logger.warning(f"File {file_path} does not have .pdf extension")
+        
         try:
-            logger.info(f"Loading PDF: {file_path}")
+            logger.info(f"Loading PDF file: {file_path}")
             loader = PyPDFLoader(file_path)
             documents = loader.load()
-            logger.info(f"Successfully loaded {len(documents)} pages from PDF")
+            
+            # Log statistics
+            total_chars = sum(len(doc.page_content) for doc in documents)
+            logger.info(
+                f"Successfully loaded PDF: {len(documents)} pages, "
+                f"{total_chars:,} total characters"
+            )
+            
             return documents
+            
+        except FileNotFoundError:
+            raise
         except Exception as e:
-            logger.error(f"Error loading PDF {file_path}: {str(e)}")
+            logger.error(
+                f"Error loading PDF {file_path}: {str(e)}",
+                exc_info=True
+            )
             raise
     
     def load_multiple_pdfs(self, directory_path: str) -> List[Document]:
@@ -145,26 +237,58 @@ class DocumentProcessor:
         documents = self.load_multiple_pdfs(directory_path)
         return self.chunk_documents(documents)
     
-    def get_document_stats(self, documents: List[Document]) -> dict:
+    def get_document_stats(self, documents: List[Document]) -> Dict[str, Any]:
         """
-        Get statistics about the processed documents.
+        Calculate and return statistics about processed documents.
+        
+        This method analyzes a list of documents and returns useful statistics
+        including total count, character counts, and average lengths. Useful for
+        monitoring and debugging document processing pipelines.
         
         Args:
-            documents: List of Document objects
+            documents: List of Document objects to analyze. Can be empty.
             
         Returns:
-            Dictionary containing document statistics
+            Dictionary containing:
+            - total_documents (int): Number of documents
+            - total_characters (int): Total characters across all documents
+            - average_length (float): Average characters per document
+            - chunk_size (int): Chunk size used for processing
+            - chunk_overlap (int): Chunk overlap used for processing
+        
+        Example:
+            ```python
+            documents = processor.process_pdf("document.pdf")
+            stats = processor.get_document_stats(documents)
+            print(f"Processed {stats['total_documents']} chunks")
+            print(f"Average length: {stats['average_length']} characters")
+            ```
         """
         if not documents:
-            return {"total_documents": 0, "total_characters": 0, "average_length": 0}
+            logger.debug("No documents provided for statistics calculation")
+            return {
+                "total_documents": 0,
+                "total_characters": 0,
+                "average_length": 0,
+                "chunk_size": self.chunk_size,
+                "chunk_overlap": self.chunk_overlap
+            }
         
         total_chars = sum(len(doc.page_content) for doc in documents)
         avg_length = total_chars / len(documents) if documents else 0
         
-        return {
+        stats = {
             "total_documents": len(documents),
             "total_characters": total_chars,
             "average_length": round(avg_length, 2),
             "chunk_size": self.chunk_size,
             "chunk_overlap": self.chunk_overlap
         }
+        
+        logger.debug(
+            f"Document stats: {stats['total_documents']} docs, "
+            f"{stats['total_characters']:,} chars, "
+            f"avg {stats['average_length']:.1f} chars/doc"
+        )
+        
+        return stats

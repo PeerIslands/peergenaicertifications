@@ -2,18 +2,18 @@
 
 A production-ready Retrieval-Augmented Generation (RAG) service built with **LangChain**, **LlamaIndex**, **OpenAI**, and **MongoDB Vector Search**. Features dual framework support, professional AI responses, and quality evaluation.
 
-## 🚀 Features
+## Features
 
 - **Dual Framework Support**: Switch between LangChain and LlamaIndex for document processing and retrieval
 - **Professional AI Responses**: Direct, concise answers without unnecessary politeness
 - **PDF Processing**: Automatic document loading and intelligent chunking
 - **Vector Storage**: MongoDB Atlas Vector Search for semantic similarity
-- **Quality Evaluation**: TruLens-powered RAG evaluation (answer relevance, context relevance, groundedness)
+- **Quality Evaluation**: LangSmith-powered RAG evaluation (answer relevance, context relevance, groundedness)
 - **Conversation History**: Maintain context across follow-up questions
 - **REST API**: Production-ready FastAPI service with comprehensive endpoints
 - **Error Resilience**: Robust error handling with clear, actionable messages
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Quick Start](#quick-start)
 - [Installation](#installation)
@@ -33,19 +33,19 @@ A production-ready Retrieval-Augmented Generation (RAG) service built with **Lan
 # 1. Clone and setup
 git clone <repository-url>
 cd smart-ai-rag-svc
-python3 -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 2. Configure environment
-cp .env.example .env
-# Edit .env with your OPENAI_API_KEY and MONGODB_URI
+cp env.template .env
+# Edit .env with your OPENAI_API_KEY
 
-# 3. Setup MongoDB index
-python scripts/setup_mongodb_index.py
+# 3. Start service
+uvicorn main:app --reload
 
-# 4. Start service
-python main.py
+# 4. Access Swagger documentation
+open http://localhost:8000/docs
 
 # 5. Upload a document
 curl -X POST "http://localhost:8000/documents/upload-file?use_llamaindex=true" \
@@ -63,7 +63,7 @@ curl -X POST "http://localhost:8000/questions/ask?use_llamaindex=true" \
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.12.9 (recommended for LlamaIndex compatibility)
 - MongoDB Atlas account (free tier works)
 - OpenAI API key
 
@@ -75,15 +75,18 @@ git clone <repository-url>
 cd smart-ai-rag-svc
 ```
 
-#### 2. Create a virtual environment
+#### 2. Create a virtual environment (Python 3.12)
 ```bash
-# Create virtual environment
-python3 -m venv venv
+# Create virtual environment with Python 3.12
+python3.12 -m venv venv
 
 # Activate it
 source venv/bin/activate  # On Linux/Mac
 # OR
 venv\Scripts\activate  # On Windows
+
+# Verify Python version
+python --version  # Should show Python 3.12.9
 ```
 
 #### 3. Install dependencies
@@ -93,7 +96,7 @@ pip install -r requirements.txt
 
 #### 4. Set up environment variables
 ```bash
-cp .env.example .env
+cp env.template .env
 ```
 
 Edit `.env` file with your configuration:
@@ -158,10 +161,10 @@ curl http://localhost:8000/health
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `OPENAI_API_KEY` | Your OpenAI API key | - | ✅ Yes |
+| `OPENAI_API_KEY` | Your OpenAI API key | - | Yes |
 | `OPENAI_EMBEDDING_MODEL` | Embedding model | `text-embedding-ada-002` | No |
 | `OPENAI_LLM_MODEL` | Language model | `gpt-3.5-turbo` | No |
-| `MONGODB_URI` | MongoDB connection string | - | ✅ Yes |
+| `MONGODB_URI` | MongoDB connection string | - | Yes |
 | `MONGODB_DATABASE` | Database name | `rag_database` | No |
 | `MONGODB_COLLECTION` | Collection name | `documents` | No |
 | `MONGODB_VECTOR_INDEX` | Vector index name | `vector_index` | No |
@@ -282,7 +285,43 @@ curl -X POST "http://localhost:8000/evaluate/query" \
 
 ---
 
+## Interactive API Documentation (Swagger)
+
+**Access the interactive Swagger UI**:
+```
+http://localhost:8000/docs
+```
+
+**Alternative documentation formats**:
+- **ReDoc** (cleaner view): `http://localhost:8000/redoc`
+- **OpenAPI JSON**: `http://localhost:8000/openapi.json`
+
+### Swagger Features
+
+The Swagger UI at `/docs` provides:
+- **Interactive Testing**: Try all endpoints directly in your browser
+- **Request Examples**: Pre-filled examples for every endpoint
+- **Response Schemas**: Complete Pydantic model documentation
+- **Parameter Validation**: Real-time validation feedback
+- **Authentication**: Test with your API keys
+- **Export**: Download OpenAPI spec for client generation
+
+### Quick Access
+
+Once the service is running:
+```bash
+# Local development
+open http://localhost:8000/docs
+
+# Docker
+open http://localhost:8000/docs
+```
+
+---
+
 ## API Endpoints
+
+**Total: 10 endpoints** | **0 deprecated**
 
 ### Document Management
 
@@ -457,15 +496,15 @@ GET /health
 ### When to Use Each
 
 #### Use **LlamaIndex** when:
-- ✅ You need advanced retrieval strategies
-- ✅ Processing complex, structured documents
-- ✅ Want better metadata handling
-- ✅ Need sentence-level precision
+- You need advanced retrieval strategies
+- Processing complex, structured documents
+- Want better metadata handling
+- Need sentence-level precision
 
 #### Use **LangChain** when:
-- ✅ You prefer simpler, straightforward chunking
-- ✅ Need maximum compatibility with existing tools
-- ✅ Want basic, reliable document processing
+- You prefer simpler, straightforward chunking
+- Need maximum compatibility with existing tools
+- Want basic, reliable document processing
 
 ### Technical Comparison
 
@@ -611,7 +650,7 @@ client = MongoClient(config('MONGODB_URI'))
 db = client['rag_database']
 db['documents'].delete_many({})
 client.close()
-print("✅ Database cleared")
+print("Database cleared")
 EOF
 
 # Restart service and re-upload documents
@@ -643,7 +682,7 @@ ModuleNotFoundError: No module named 'fastapi'
 1. **Increase k**: Try `k=10` instead of `k=3` to retrieve more context
 2. **Lower similarity threshold**: Set `SIMILARITY_THRESHOLD=0.5` in `.env`
 3. **Check document quality**: Ensure PDFs have clear, extractable text
-4. **Note**: Some low scores may be due to TruLens evaluation bugs, not actual quality issues
+4. **Note**: Evaluation scores are calculated using LangSmith evaluation chains for accuracy
 
 #### 7. Wrong Answers Despite Correct Documents
 
@@ -712,7 +751,7 @@ Before starting the service, verify:
 │  │  │Processor │  │ Processor   │ │ │
 │  │  └──────────┘  └─────────────┘ │ │
 │  │  ┌──────────────────────────┐  │ │
-│  │  │   RAGEvaluator (TruLens) │  │ │
+│  │  │   RAGEvaluator (LangSmith) │  │ │
 │  │  └──────────────────────────┘  │ │
 │  └────────────────────────────────┘ │
 └──────┬──────────────┬───────────────┘
@@ -756,15 +795,15 @@ For issues or questions:
 ## Version History
 
 ### v1.0.0 (Current)
-- ✅ Dual framework support (LlamaIndex + LangChain)
-- ✅ Professional AI responses (no chatty answers)
-- ✅ TruLens quality evaluation
-- ✅ MongoDB Vector Search integration
-- ✅ Comprehensive error handling
-- ✅ Production-ready REST API
-- ✅ Conversation history support
-- ⚠️ Sentence Window Retrieval (parsing active, replacement temporarily disabled)
+- Dual framework support (LlamaIndex + LangChain)
+- Professional AI responses (no chatty answers)
+- LangSmith quality evaluation
+- MongoDB Vector Search integration
+- Comprehensive error handling
+- Production-ready REST API
+- Conversation history support
+- NOTE: Sentence Window Retrieval (parsing active, replacement temporarily disabled)
 
 ---
 
-**Built with ❤️ for production RAG applications**
+**Built for production RAG applications**
