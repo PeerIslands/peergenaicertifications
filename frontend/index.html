@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lang Chain powered RAG and Ollama Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f0f2f5;
+        }
+
+        #chatArea {
+            border-radius: 10px;
+            padding: 20px;
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            min-height: 300px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .msg-user {
+            background: #d1e7dd !important;
+            border-left: 5px solid #0f5132;
+        }
+
+        .msg-ai {
+            background: #f8d7da !important;
+            border-left: 5px solid #842029;
+        }
+
+        .retrieved-box {
+            background: #f8f9fa;
+            border: 1px dashed #ced4da;
+            border-radius: 10px;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container py-5" style="max-width: 900px;">
+
+        <h2 class="text-center mb-4 fw-bold">Lang Chain powered + RAG + Ollama Chat</h2>
+
+        <div class="mb-3">
+            <textarea id="userQuery" class="form-control" rows="3" placeholder="Type your question here..."></textarea>
+        </div>
+
+        <div class="text-center mb-4">
+            <button id="sendBtn" class="btn btn-primary px-4">Send</button>
+        </div>
+
+        <div id="chatArea"></div>
+
+    </div>
+
+    <script>
+        const sendBtn = document.getElementById("sendBtn");
+        const userQuery = document.getElementById("userQuery");
+        const chatArea = document.getElementById("chatArea");
+
+        function addMessage(text, sender = "user") {
+            const div = document.createElement("div");
+            div.classList.add("mb-3", "p-3", "rounded");
+            div.classList.add(sender === "user" ? "msg-user" : "msg-ai");
+            div.innerHTML = `<strong>${sender === "user" ? "You" : "AI"}:</strong> ${text}`;
+            chatArea.appendChild(div);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        sendBtn.addEventListener("click", async () => {
+            const q = userQuery.value.trim();
+            if (!q) return;
+
+            addMessage(q, "user");
+            userQuery.value = "";
+
+            // Temporary "Thinking..." message
+            const loading = document.createElement("div");
+            loading.classList.add("mb-3", "p-3", "rounded", "msg-ai");
+            loading.innerHTML = `<em>Thinking...</em>`;
+            chatArea.appendChild(loading);
+
+            try {
+                // FIXED → Now calls the same host:port automatically
+                const res = await fetch("/query", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question: q })
+                });
+
+                const data = await res.json();
+
+                chatArea.removeChild(loading);
+
+                if (data.answer) {
+                    addMessage(data.answer, "ai");
+                } else {
+                    addMessage("No answer returned.", "ai");
+                }
+
+                // Show retrieved chunks
+                if (data.context_used && data.context_used.length > 0) {
+                    const box = document.createElement("div");
+                    box.classList.add("retrieved-box", "mb-3");
+                    box.innerHTML =
+                        `<strong>Retrieved Chunks:</strong><br><br>` +
+                        data.context_used
+                            .map(chunk => `<div>${chunk.slice(0, 500)}...</div>`)
+                            .join("<hr>");
+                    chatArea.appendChild(box);
+                }
+            } catch (err) {
+                console.error(err);
+                chatArea.removeChild(loading);
+                addMessage("Error connecting to server.", "ai");
+            }
+        });
+    </script>
+</body>
+
+</html>
+
