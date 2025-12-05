@@ -1,0 +1,39 @@
+# Prometheus Configuration for Smart AI RAG Service
+# This configuration sets up Prometheus to scrape metrics from the RAG service.
+
+global:
+  scrape_interval: 15s  # How frequently to scrape targets
+  evaluation_interval: 15s  # How frequently to evaluate rules
+  external_labels:
+    cluster: 'smart-rag-prod'
+    environment: 'production'
+
+# Alerting configuration (optional - requires Alertmanager)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - "alerts.yml"
+
+# Scrape configuration
+scrape_configs:
+  # Smart AI RAG Service
+  - job_name: 'smart-rag-service'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['rag-api:8000']  # Docker service name
+        labels:
+          service: 'smart-rag-api'
+          component: 'backend'
+    
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+

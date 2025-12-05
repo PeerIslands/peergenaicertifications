@@ -31,6 +31,10 @@ from src.models.schemas import (
 )
 from src.config.settings import settings
 from src.utils.rag_evaluator import RAGEvaluator
+from src.utils.logging_config import setup_logging, get_logger
+from src.utils.tracing import setup_tracing, instrument_fastapi
+from src.utils.middleware import ObservabilityMiddleware, CORSSecurityHeaders
+from prometheus_client import make_asgi_app
 
 # Suppress deprecation warnings from dependencies
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -38,9 +42,10 @@ warnings.filterwarnings("ignore", message=".*pkg_resources.*", category=UserWarn
 warnings.filterwarnings("ignore", message=".*LangChainDeprecationWarning.*")
 warnings.filterwarnings("ignore", message=".*Context is being overwritten.*")
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configure structured logging (use JSON in production, text in development)
+use_json_logs = os.getenv("ENVIRONMENT", "development") == "production"
+setup_logging(log_level=os.getenv("LOG_LEVEL", "INFO"), use_json=use_json_logs)
+logger = get_logger(__name__)
 
 # Global service instances
 rag_service: EnhancedRAGService = None
@@ -53,51 +58,58 @@ async def lifespan(app: FastAPI):
     global rag_service, rag_evaluator
     
     # Startup
-    logger.info("Starting services...")
+    logger.info("Starting Smart AI RAG Service...", version="2.0.0", environment=os.getenv("ENVIRONMENT", "development"))
+    
+    # Initialize tracing (optional OTLP endpoint)
+    otlp_endpoint = os.getenv("OTLP_ENDPOINT")
+    if otlp_endpoint:
+        logger.info("Initializing distributed tracing...", otlp_endpoint=otlp_endpoint)
+        setup_tracing(otlp_endpoint=otlp_endpoint)
+    else:
+        logger.info("Distributed tracing initialized (no OTLP endpoint configured)")
+        setup_tracing()
+    
     try:
         rag_service = EnhancedRAGService()
         if rag_service._llamaindex_available:
-            logger.info("Enhanced RAG service initialized (LlamaIndex + LangChain available)")
+            logger.info("Enhanced RAG service initialized", frameworks="LlamaIndex + LangChain")
         else:
-            logger.info("Enhanced RAG service initialized (LangChain only - set OPENAI_API_KEY for LlamaIndex)")
+            logger.info("Enhanced RAG service initialized", frameworks="LangChain only", note="Set OPENAI_API_KEY for LlamaIndex")
         
         # Initialize RAG evaluator (optional - requires OpenAI API key)
-        # Reuse LLM from rag_service if available to avoid initialization issues
         try:
             if settings.openai_api_key and rag_service and rag_service.llm:
-                # Reuse LLM from rag_service to avoid ChatOpenAI initialization issues
                 rag_evaluator = RAGEvaluator(llm=rag_service.llm)
                 if rag_evaluator._available:
-                    logger.info("LangSmith RAG Evaluator initialized successfully (reusing LLM)")
+                    logger.info("LangSmith RAG Evaluator initialized", method="reusing LLM")
                 else:
                     logger.warning("RAG Evaluator initialized but not fully available")
             elif settings.openai_api_key:
-                # Try to create evaluator with new LLM
                 try:
                     rag_evaluator = RAGEvaluator()
                     if rag_evaluator._available:
-                        logger.info("LangSmith RAG Evaluator initialized successfully")
+                        logger.info("LangSmith RAG Evaluator initialized")
                     else:
                         logger.warning("RAG Evaluator initialized but not fully available")
                 except Exception:
                     logger.warning("RAG Evaluator initialization failed")
                     rag_evaluator = None
             else:
-                logger.warning("RAG Evaluator not initialized (OPENAI_API_KEY required)")
+                logger.warning("RAG Evaluator not initialized", reason="OPENAI_API_KEY required")
                 rag_evaluator = None
         except Exception as eval_error:
-            logger.warning(f"RAG Evaluator initialization failed: {str(eval_error)}")
+            logger.warning("RAG Evaluator initialization failed", error=str(eval_error))
             rag_evaluator = None
     except Exception as e:
-        logger.error(f"Failed to initialize services: {str(e)}")
-        # Don't raise - allow app to start even if some services fail
-        # This allows health checks and basic functionality
+        logger.error("Failed to initialize services", error=str(e))
         logger.warning("Application starting with limited functionality")
+    
+    logger.info("Smart AI RAG Service started successfully")
     
     yield
     
     # Shutdown
-    logger.info("Shutting down services...")
+    logger.info("Shutting down Smart AI RAG Service...")
 
 
 # Create FastAPI app with comprehensive OpenAPI documentation
@@ -116,6 +128,7 @@ app = FastAPI(
     * **Vector Search**: MongoDB Atlas vector search for semantic retrieval
     * **Quality Evaluation**: LangSmith-based RAG quality assessment
     * **Conversation History**: Maintain context across multiple questions
+    * **Observability**: Structured logging, metrics (Prometheus), and distributed tracing (OpenTelemetry)
     
     ### Frameworks
     
@@ -174,6 +187,10 @@ app = FastAPI(
             "name": "evaluation",
             "description": "RAG quality evaluation using LangSmith metrics. Assess answer relevance, context relevance, and groundedness.",
         },
+        {
+            "name": "observability",
+            "description": "Observability endpoints. Prometheus metrics, health checks, and system statistics.",
+        },
     ],
 )
 
@@ -185,6 +202,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add observability middleware (request tracking, logging, metrics)
+app.add_middleware(ObservabilityMiddleware)
+
+# Add security headers middleware
+app.add_middleware(CORSSecurityHeaders)
+
+# Instrument FastAPI with OpenTelemetry tracing
+instrument_fastapi(app)
+
+# Mount Prometheus metrics endpoint
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 
 @app.get(

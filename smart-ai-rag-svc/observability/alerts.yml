@@ -1,0 +1,117 @@
+# Prometheus Alert Rules for Smart AI RAG Service
+# These rules define conditions that trigger alerts when metrics cross thresholds.
+
+groups:
+  - name: smart_rag_alerts
+    interval: 30s
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: rate(errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/sec (> 0.1) for {{ $labels.component }}"
+
+      # API Latency High
+      - alert: HighAPILatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "API latency is high"
+          description: "P95 latency is {{ $value }}s (> 10s) for {{ $labels.endpoint }}"
+
+      # Document Processing Slow
+      - alert: SlowDocumentProcessing
+        expr: histogram_quantile(0.95, rate(document_processing_duration_seconds_bucket[5m])) > 120
+        for: 10m
+        labels:
+          severity: info
+          component: processing
+        annotations:
+          summary: "Document processing is slow"
+          description: "P95 processing time is {{ $value }}s (> 120s) for {{ $labels.framework }}"
+
+      # High OpenAI Costs
+      - alert: HighOpenAICosts
+        expr: rate(openai_cost_dollars_total[1h]) > 10
+        for: 1h
+        labels:
+          severity: warning
+          component: llm
+        annotations:
+          summary: "High OpenAI API costs"
+          description: "OpenAI costs are ${{ $value }}/hour (> $10/hour) for {{ $labels.model }}"
+
+      # Service Down
+      - alert: ServiceDown
+        expr: up{job="smart-rag-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "Smart RAG Service is down"
+          description: "The service has been down for more than 1 minute"
+
+      # Low Success Rate
+      - alert: LowSuccessRate
+        expr: rate(questions_answered_total{status="success"}[5m]) / rate(questions_answered_total[5m]) < 0.9
+        for: 10m
+        labels:
+          severity: warning
+          component: rag
+        annotations:
+          summary: "Low question answering success rate"
+          description: "Success rate is {{ $value }} (< 90%) for {{ $labels.framework }}"
+
+      # High LLM Request Failures
+      - alert: HighLLMFailures
+        expr: rate(llm_requests_total{status="error"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: llm
+        annotations:
+          summary: "High LLM request failure rate"
+          description: "LLM failure rate is {{ $value }} requests/sec for {{ $labels.model }}"
+
+      # Evaluation Score Drop
+      - alert: LowEvaluationScores
+        expr: avg(evaluation_scores{metric="answer_relevance"}) < 0.7
+        for: 15m
+        labels:
+          severity: info
+          component: quality
+        annotations:
+          summary: "RAG evaluation scores are low"
+          description: "Average {{ $labels.metric }} score is {{ $value }} (< 0.7)"
+
+      # Memory/Resource Alerts (if psutil metrics are exposed)
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 2e9  # 2GB
+        for: 10m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanize }}B (> 2GB)"
+
+      # Vector Store Issues
+      - alert: VectorStoreErrors
+        expr: rate(vector_store_operations_total{status="error"}[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Vector store errors detected"
+          description: "Vector store error rate is {{ $value }} errors/sec for {{ $labels.operation }}"
+

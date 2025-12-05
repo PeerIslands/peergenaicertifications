@@ -32,10 +32,16 @@ import pymongo
 from ..utils.document_processor import DocumentProcessor
 from ..utils.llamaindex_processor import LlamaIndexProcessor
 from ..config.settings import settings
+from ..utils.logging_config import get_logger
+from ..utils.metrics import (
+    track_document_processed, track_question_answered, 
+    track_llm_cost, track_operation_duration, track_error,
+    indexed_documents_total, conversation_history_size
+)
+from ..utils.tracing import trace_function, add_span_attributes
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class EnhancedRAGService:
@@ -397,6 +403,7 @@ class EnhancedRAGService:
                 "error": str(e)
             }
     
+    @trace_function(span_name="load_and_index_documents")
     def load_and_index_documents(self, 
                                 file_path: Optional[str] = None,
                                 directory_path: Optional[str] = None,
@@ -418,17 +425,48 @@ class EnhancedRAGService:
             If LlamaIndex is requested but not available (missing OPENAI_API_KEY),
             will automatically fall back to LangChain processing.
         """
-        if use_llamaindex and not self._llamaindex_available:
-            logger.warning(
-                "LlamaIndex requested but not available (missing OPENAI_API_KEY). "
-                "Falling back to LangChain processing."
-            )
-            use_llamaindex = False
+        framework = "llamaindex" if use_llamaindex else "langchain"
+        add_span_attributes(framework=framework, file_path=file_path or directory_path)
         
-        if use_llamaindex:
-            return self.load_and_index_documents_llamaindex(file_path, directory_path, original_filename)
-        else:
-            return self.load_and_index_documents_langchain(file_path, directory_path)
+        start_time = time.time()
+        
+        try:
+            if use_llamaindex and not self._llamaindex_available:
+                logger.warning(
+                    "LlamaIndex requested but not available",
+                    framework="llamaindex",
+                    fallback="langchain"
+                )
+                use_llamaindex = False
+                framework = "langchain"
+            
+            with track_operation_duration("document_processing", {"framework": framework}):
+                if use_llamaindex:
+                    result = self.load_and_index_documents_llamaindex(file_path, directory_path, original_filename)
+                else:
+                    result = self.load_and_index_documents_langchain(file_path, directory_path)
+            
+            # Track metrics
+            if result.get("success"):
+                track_document_processed(
+                    framework=framework,
+                    status="success",
+                    chunks=result.get("num_chunks", 0)
+                )
+                indexed_documents_total.labels(framework=framework).set(
+                    result.get("num_documents", 0)
+                )
+            else:
+                track_document_processed(framework=framework, status="error")
+                track_error("document_processing_failed", "enhanced_rag_service")
+            
+            return result
+            
+        except Exception as e:
+            track_document_processed(framework=framework, status="error")
+            track_error("document_processing_exception", "enhanced_rag_service")
+            logger.error("Document processing failed", error=str(e), framework=framework)
+            raise
     
     def _create_query_engine(self):
         """Create a query engine with Sentence Window Retrieval from the vector index."""
@@ -749,6 +787,7 @@ Answer:"""
                 "error": str(e)
             }
     
+    @trace_function(span_name="ask_question")
     def ask_question(self, 
                     question: str,
                     k: int = None,
@@ -770,22 +809,57 @@ Answer:"""
             If LlamaIndex is requested but not available (missing OPENAI_API_KEY),
             will automatically fall back to LangChain processing.
         """
-        if use_llamaindex and not self._llamaindex_available:
-            logger.warning(
-                "LlamaIndex requested but not available (missing OPENAI_API_KEY). "
-                "Falling back to LangChain processing."
-            )
-            use_llamaindex = False
+        framework = "llamaindex" if use_llamaindex else "langchain"
+        add_span_attributes(
+            framework=framework,
+            question_length=len(question),
+            use_conversation_history=use_conversation_history
+        )
         
-        if use_llamaindex:
-            try:
-                return self.ask_question_llamaindex(question, use_conversation_history)
-            except ValueError as e:
-                # If LlamaIndex fails due to unavailability, fall back to LangChain
-                logger.warning(f"LlamaIndex query failed: {str(e)}. Falling back to LangChain.")
-                return self.ask_question_langchain(question, k, use_conversation_history)
-        else:
-            return self.ask_question_langchain(question, k, use_conversation_history)
+        try:
+            if use_llamaindex and not self._llamaindex_available:
+                logger.warning(
+                    "LlamaIndex requested but not available",
+                    framework="llamaindex",
+                    fallback="langchain"
+                )
+                use_llamaindex = False
+                framework = "langchain"
+            
+            with track_operation_duration("question_answering", {"framework": framework}):
+                if use_llamaindex:
+                    try:
+                        result = self.ask_question_llamaindex(question, use_conversation_history)
+                    except ValueError as e:
+                        logger.warning("LlamaIndex query failed", error=str(e), fallback="langchain")
+                        result = self.ask_question_langchain(question, k, use_conversation_history)
+                        framework = "langchain"
+                else:
+                    result = self.ask_question_langchain(question, k, use_conversation_history)
+            
+            # Track metrics
+            if result.get("success"):
+                track_question_answered(framework=framework, status="success")
+                # Track token usage if available in response (requires instrumentation of LLM calls)
+                add_span_attributes(
+                    answer_length=len(result.get("answer", "")),
+                    num_sources=result.get("num_sources", 0),
+                    processing_time=result.get("processing_time", 0)
+                )
+            else:
+                track_question_answered(framework=framework, status="error")
+                track_error("question_answering_failed", "enhanced_rag_service")
+            
+            # Update conversation history size metric
+            conversation_history_size.set(len(self.conversation_history))
+            
+            return result
+            
+        except Exception as e:
+            track_question_answered(framework=framework, status="error")
+            track_error("question_answering_exception", "enhanced_rag_service")
+            logger.error("Question answering failed", error=str(e), framework=framework)
+            raise
     
     def _format_conversation_history(self) -> str:
         """Format conversation history for context."""
@@ -808,6 +882,7 @@ Answer:"""
     def clear_conversation_history(self):
         """Clear the conversation history."""
         self.conversation_history.clear()
+        conversation_history_size.set(0)
         logger.info("Conversation history cleared")
     
     def get_service_stats(self) -> Dict[str, Any]:

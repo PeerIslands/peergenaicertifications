@@ -12,6 +12,7 @@ A production-ready Retrieval-Augmented Generation (RAG) service built with **Lan
 - **Conversation History**: Maintain context across follow-up questions
 - **REST API**: Production-ready FastAPI service with comprehensive endpoints
 - **Error Resilience**: Robust error handling with clear, actionable messages
+- **Production Observability**: Structured logging, Prometheus metrics, OpenTelemetry tracing, and Grafana dashboards
 
 ## Table of Contents
 
@@ -20,6 +21,7 @@ A production-ready Retrieval-Augmented Generation (RAG) service built with **Lan
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [API Endpoints](#api-endpoints)
+- [Observability](#observability)
 - [RAG Quality Evaluation](#rag-quality-evaluation)
 - [Framework Comparison](#framework-comparison-llamaindex-vs-langchain)
 - [Examples](#examples)
@@ -429,6 +431,62 @@ GET /health
 
 ---
 
+## Observability
+
+The Smart AI RAG Service includes production-grade observability for monitoring, debugging, and cost tracking.
+
+### Features
+
+- **Structured Logging**: JSON-formatted logs with request correlation IDs
+- **Prometheus Metrics**: Performance, usage, and cost metrics
+- **OpenTelemetry Tracing**: End-to-end distributed tracing with Jaeger
+- **Grafana Dashboards**: Pre-built dashboards for visualization
+- **Automated Alerts**: Alert rules for critical issues
+- **Cost Tracking**: Real-time OpenAI API cost monitoring
+
+### Quick Start
+
+```bash
+# Start observability stack
+cd observability
+docker-compose -f docker-compose-observability.yml up -d
+
+# Start RAG service with observability
+export ENVIRONMENT=production
+export OTLP_ENDPOINT=http://jaeger:4317
+uvicorn main:app --reload
+```
+
+### Access Dashboards
+
+- **Prometheus**: http://localhost:9090 - Metrics collection
+- **Grafana**: http://localhost:3000 (admin/admin) - Dashboards
+- **Jaeger**: http://localhost:16686 - Distributed tracing
+- **Metrics Endpoint**: http://localhost:8000/metrics - Raw Prometheus metrics
+
+### Key Metrics
+
+```promql
+# Request rate per second
+rate(http_requests_total[5m])
+
+# P95 latency
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# OpenAI cost per hour
+rate(openai_cost_dollars_total[1h])
+
+# Success rate
+rate(questions_answered_total{status="success"}[5m]) / rate(questions_answered_total[5m])
+```
+
+### Documentation
+
+For comprehensive observability documentation, see:
+- **[observability/README.md](observability/README.md)** - Complete observability guide (setup, usage, troubleshooting)
+
+---
+
 ## RAG Quality Evaluation
 
 ### Metrics Explained
@@ -762,18 +820,6 @@ Before starting the service, verify:
 │  Search     │  │            │
 └─────────────┘  └────────────┘
 ```
-
----
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
 
 ---
 

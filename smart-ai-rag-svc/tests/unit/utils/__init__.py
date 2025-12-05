@@ -1,2 +1,1 @@
-"""Utils unit tests."""
-
+"""Unit tests for utils module."""
