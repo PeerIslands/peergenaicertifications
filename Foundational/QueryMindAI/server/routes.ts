@@ -5,6 +5,13 @@ import { LangChainService } from "./langchain";
 import { ragService } from "./rag";
 import { mongodbService } from "./mongodb";
 import { insertConversationSchema, insertMessageSchema, insertAnalyticsSchema } from "@shared/schema";
+import {
+  chatRequestSchema,
+  conversationParamsSchema,
+  analyticsParamsSchema,
+  ragSearchQuerySchema,
+} from "@shared/schema";
+import { validate } from "./validation";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
@@ -20,15 +27,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Chat API endpoint with RAG
-  app.post("/api/chat", async (req, res) => {
+  app.post("/api/chat", validate(chatRequestSchema, "body"), async (req, res) => {
     try {
       const { message, sessionId, conversationId } = req.body;
-
-      if (!message || !sessionId) {
-        return res.status(400).json({ 
-          error: "Missing required fields: message and sessionId" 
-        });
-      }
 
       // Create conversation if it doesn't exist
       let currentConversationId = conversationId;
@@ -110,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get conversation history
-  app.get("/api/conversation/:conversationId", async (req, res) => {
+  app.get("/api/conversation/:conversationId", validate(conversationParamsSchema, "params"), async (req, res) => {
     try {
       const { conversationId } = req.params;
       const messages = await storage.getMessagesByConversation(conversationId);
@@ -135,7 +136,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get session analytics
-  app.get("/api/analytics/:sessionId", async (req, res) => {
+  app.get("/api/analytics/:sessionId", validate(analyticsParamsSchema, "params"), async (req, res) => {
     try {
       const { sessionId } = req.params;
       const analytics = await storage.getAnalyticsSummary(sessionId);
@@ -154,17 +155,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // RAG endpoints
-  app.get("/api/rag/search", async (req, res) => {
+  app.get("/api/rag/search", validate(ragSearchQuerySchema, "query"), async (req, res) => {
     try {
       const { query, limit = 5 } = req.query;
 
-      if (!query) {
-        return res.status(400).json({ 
-          error: "Missing required parameter: query" 
-        });
-      }
-
-      const results = await ragService.retrieveRelevantDocuments(query as string, parseInt(limit as string));
+      const results = await ragService.retrieveRelevantDocuments(query as string, limit as number);
       
       res.json({
         success: true,
