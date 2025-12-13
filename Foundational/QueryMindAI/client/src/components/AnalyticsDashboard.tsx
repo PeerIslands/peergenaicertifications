@@ -10,6 +10,16 @@ interface AnalyticsDashboardProps {
   systemUptime: number;
 }
 
+/**
+ * Dashboard component that displays comprehensive analytics including metrics cards, charts, and recent activity.
+ * 
+ * @param props - Component props
+ * @param props.totalMessages - Total number of messages in the session
+ * @param props.averageResponseTime - Average response time in milliseconds
+ * @param props.conversationCount - Number of conversations in the session
+ * @param props.systemUptime - System uptime percentage
+ * @returns A React component rendering an analytics dashboard with charts and metrics
+ */
 export function AnalyticsDashboard({ 
   totalMessages, 
   averageResponseTime, 

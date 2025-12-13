@@ -17,6 +17,12 @@ interface Message {
   responseTime?: number;
 }
 
+/**
+ * Main chat page component that manages the chat interface, message state, and analytics.
+ * Handles sending messages, displaying conversation history, and showing analytics dashboard.
+ * 
+ * @returns A React component rendering the complete chat interface with input, messages, and analytics
+ */
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);

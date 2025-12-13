@@ -9,9 +9,17 @@ export interface ChatContext {
   messages: Message[];
 }
 
+/**
+ * Service for interacting with Azure OpenAI using LangChain.
+ * Handles message generation, conversation context management, and RAG integration.
+ */
 export class LangChainService {
   private llm: ChatOpenAI;
 
+  /**
+   * Creates a new LangChainService instance.
+   * Initializes the ChatOpenAI client with Azure OpenAI configuration from environment variables.
+   */
   constructor() {
     // Initialize Azure OpenAI
     this.llm = new ChatOpenAI({
@@ -29,7 +37,16 @@ export class LangChainService {
   }
 
   /**
-   * Generate AI response using LangChain with RAG
+   * Generates an AI response using LangChain with RAG (Retrieval-Augmented Generation) support.
+   * 
+   * @param userMessage - The user's message to respond to
+   * @param context - The chat context containing conversationId, sessionId, and message history
+   * @returns A promise that resolves to an object containing:
+   *   - content: The generated response text
+   *   - responseTime: The time taken to generate the response in milliseconds
+   *   - sources: Optional array of RAG sources used for context
+   * 
+   * @throws Will return an error message in the content field if generation fails
    */
   async generateResponse(
     userMessage: string,
@@ -108,7 +125,13 @@ export class LangChainService {
   }
 
   /**
-   * Convert database messages to LangChain message format with RAG context
+   * Converts database messages to LangChain message format and includes RAG context in the system message.
+   * 
+   * @param messages - Array of messages from the database to convert
+   * @param ragContext - Optional RAG context string to include in the system message
+   * @returns An array of LangChain message objects (SystemMessage, HumanMessage, AIMessage)
+   * 
+   * @private
    */
   private convertToLangChainMessages(messages: Message[], ragContext: string = '') {
     const langchainMessages = [];
@@ -136,7 +159,10 @@ export class LangChainService {
   }
 
   /**
-   * Get conversation summary for analytics
+   * Generates a summary of the conversation for analytics purposes.
+   * 
+   * @param messages - Array of messages from the conversation
+   * @returns A promise that resolves to a string summary of the conversation topics
    */
   async getConversationSummary(messages: Message[]): Promise<string> {
     if (messages.length === 0) return "No conversation yet";
@@ -148,7 +174,11 @@ export class LangChainService {
   }
 
   /**
-   * Check if Azure OpenAI service is accessible
+   * Checks if the Azure OpenAI service is accessible by sending a test request.
+   * 
+   * @returns A promise that resolves to true if the service is accessible, false otherwise
+   * 
+   * @private
    */
   private async isAzureOpenAIAccessible(): Promise<boolean> {
     try {
@@ -165,7 +195,16 @@ export class LangChainService {
   }
 
   /**
-   * Validate Azure OpenAI configuration
+   * Validates the Azure OpenAI configuration by checking environment variables and testing connectivity.
+   * 
+   * @returns A promise that resolves to true if configuration is valid and service is accessible, false otherwise
+   * 
+   * @remarks
+   * Checks for required environment variables:
+   * - AZURE_OPENAI_API_KEY
+   * - AZURE_OPENAI_DEPLOYMENT_NAME
+   * 
+   * Also performs a test API call to verify the service is working correctly.
    */
   static async validateConfiguration(): Promise<boolean> {
     try {

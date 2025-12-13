@@ -10,6 +10,16 @@ interface ChatInputProps {
   placeholder?: string;
 }
 
+/**
+ * Chat input component that allows users to type and send messages.
+ * Supports Enter key to submit and Shift+Enter for new lines.
+ * 
+ * @param props - Component props
+ * @param props.onSendMessage - Callback function called when a message is submitted
+ * @param props.disabled - Whether the input is disabled (default: false)
+ * @param props.placeholder - Placeholder text for the input (default: "Type your question here...")
+ * @returns A React component rendering a textarea and send button
+ */
 export function ChatInput({ 
   onSendMessage, 
   disabled = false,

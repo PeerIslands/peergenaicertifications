@@ -2,6 +2,13 @@ interface TypingIndicatorProps {
   visible: boolean;
 }
 
+/**
+ * Component that displays an animated typing indicator when the AI is generating a response.
+ * 
+ * @param props - Component props
+ * @param props.visible - Whether the typing indicator should be visible
+ * @returns A React component rendering animated dots and "AI is thinking..." text, or null if not visible
+ */
 export function TypingIndicator({ visible }: TypingIndicatorProps) {
   if (!visible) return null;
 

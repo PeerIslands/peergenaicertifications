@@ -9,6 +9,16 @@ interface MessageBubbleProps {
   responseTime?: number;
 }
 
+/**
+ * Component that displays a single chat message with avatar, content, timestamp, and optional response time.
+ * 
+ * @param props - Component props
+ * @param props.role - The role of the message sender ("user" or "assistant")
+ * @param props.content - The message content text
+ * @param props.timestamp - The timestamp when the message was sent
+ * @param props.responseTime - Optional response time in milliseconds (typically for AI messages)
+ * @returns A React component rendering a message bubble with avatar and metadata
+ */
 export function MessageBubble({ role, content, timestamp, responseTime }: MessageBubbleProps) {
   const isUser = role === "user";
   

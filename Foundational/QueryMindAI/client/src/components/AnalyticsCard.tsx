@@ -8,6 +8,17 @@ interface AnalyticsCardProps {
   trend?: "up" | "down" | "neutral";
 }
 
+/**
+ * Card component for displaying analytics metrics with optional icon and trend indicator.
+ * 
+ * @param props - Component props
+ * @param props.title - The title/label for the metric
+ * @param props.value - The metric value to display (can be string or number)
+ * @param props.description - Optional description text shown below the value
+ * @param props.icon - Optional icon component to display
+ * @param props.trend - Optional trend indicator ("up", "down", or "neutral") that affects description color
+ * @returns A React component rendering an analytics card with metric information
+ */
 export function AnalyticsCard({ title, value, description, icon, trend }: AnalyticsCardProps) {
   const trendColors = {
     up: "text-green-600",

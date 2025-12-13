@@ -3,9 +3,19 @@ import { z, ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
 /**
- * Validation middleware factory that validates request data against a Zod schema
- * @param schema - Zod schema to validate against
- * @param source - Where to get the data from ('body', 'params', 'query', or 'all')
+ * Creates Express middleware that validates request data against a Zod schema.
+ * 
+ * @param schema - The Zod schema to validate against
+ * @param source - The request property to validate: 'body', 'params', 'query', or 'all' (defaults to 'body')
+ * @returns An Express middleware function that validates the request and calls next() on success,
+ *          or returns a 400 error response with validation details on failure
+ * 
+ * @example
+ * ```typescript
+ * app.post("/api/users", validate(userSchema, "body"), (req, res) => {
+ *   // req.body is now validated and typed
+ * });
+ * ```
  */
 export function validate(
   schema: z.ZodSchema,

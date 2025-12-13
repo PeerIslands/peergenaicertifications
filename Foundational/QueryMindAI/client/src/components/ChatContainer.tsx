@@ -16,6 +16,15 @@ interface ChatContainerProps {
   isTyping?: boolean;
 }
 
+/**
+ * Container component that displays chat messages and handles auto-scrolling.
+ * Shows an empty state when there are no messages and displays a typing indicator when the AI is responding.
+ * 
+ * @param props - Component props
+ * @param props.messages - Array of messages to display
+ * @param props.isTyping - Whether to show the typing indicator (default: false)
+ * @returns A React component rendering a scrollable message container
+ */
 export function ChatContainer({ messages, isTyping = false }: ChatContainerProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 

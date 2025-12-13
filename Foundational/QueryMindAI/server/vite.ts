@@ -8,6 +8,18 @@ import { nanoid } from "nanoid";
 
 const viteLogger = createLogger();
 
+/**
+ * Logs a message with a formatted timestamp and source identifier.
+ * 
+ * @param message - The message to log
+ * @param source - The source identifier for the log (default: "express")
+ * 
+ * @example
+ * ```typescript
+ * log("Server started", "server");
+ * // Output: 2:30:45 PM [server] Server started
+ * ```
+ */
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
@@ -19,6 +31,17 @@ export function log(message: string, source = "express") {
   console.log(`${formattedTime} [${source}] ${message}`);
 }
 
+/**
+ * Sets up Vite development server middleware for hot module replacement (HMR).
+ * Configures Vite to work in middleware mode and handles all routes with the client application.
+ * 
+ * @param app - The Express application instance
+ * @param server - The HTTP server instance for HMR WebSocket connection
+ * @returns A promise that resolves when Vite is set up
+ * 
+ * @remarks
+ * This function should only be called in development mode. In production, use serveStatic instead.
+ */
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -67,8 +90,19 @@ export async function setupVite(app: Express, server: Server) {
   });
 }
 
+/**
+ * Configures Express to serve static files from the build directory.
+ * Sets up a fallback to serve index.html for all routes (SPA routing support).
+ * 
+ * @param app - The Express application instance
+ * @throws Will throw an error if the build directory does not exist
+ * 
+ * @remarks
+ * This function should only be called in production mode after building the client.
+ * The build directory is expected to be at server/public.
+ */
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(import.meta.dirname, "public");
+  const distPath = path.resolve(import.meta.dirname, "..", "dist", "public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(

@@ -19,6 +19,15 @@ const initialState: ThemeProviderState = {
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+/**
+ * Theme provider component that manages light/dark theme state.
+ * Persists theme preference in localStorage and applies it to the document root.
+ * 
+ * @param props - Component props
+ * @param props.children - React children to render
+ * @param props.defaultTheme - Default theme to use if no preference is stored (default: "light")
+ * @returns A React context provider component
+ */
 export function ThemeProvider({
   children,
   defaultTheme = "light",
@@ -51,6 +60,18 @@ export function ThemeProvider({
   );
 }
 
+/**
+ * React hook to access the theme context.
+ * 
+ * @returns An object containing the current theme and a function to set the theme
+ * @throws Will throw an error if used outside of a ThemeProvider
+ * 
+ * @example
+ * ```typescript
+ * const { theme, setTheme } = useTheme();
+ * setTheme("dark");
+ * ```
+ */
 export const useTheme = () => {
   const context = useContext(ThemeProviderContext);
 

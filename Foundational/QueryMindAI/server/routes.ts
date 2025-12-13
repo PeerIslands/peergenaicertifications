@@ -13,6 +13,22 @@ import {
 } from "@shared/schema";
 import { validate } from "./validation";
 
+/**
+ * Registers all API routes for the Express application.
+ * Initializes services (LangChain, MongoDB) and sets up endpoints for chat, conversations, analytics, and RAG.
+ * 
+ * @param app - The Express application instance to register routes on
+ * @returns A promise that resolves to the HTTP server instance
+ * 
+ * @remarks
+ * This function sets up the following endpoints:
+ * - POST /api/chat - Chat endpoint with RAG support
+ * - GET /api/conversation/:conversationId - Get conversation history
+ * - GET /api/analytics/:sessionId - Get session analytics
+ * - GET /api/rag/search - Search the knowledge base
+ * - GET /api/rag/status - Get RAG service status
+ * - GET /api/health - Health check endpoint
+ */
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize services
   const langchainService = new LangChainService();

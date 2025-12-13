@@ -12,11 +12,19 @@ export interface KnowledgeDocument {
   embedding: number[];
 }
 
+/**
+ * Service for interacting with MongoDB to store and retrieve knowledge base documents.
+ * Provides methods for semantic search (vector similarity) and keyword search (Atlas Search).
+ */
 export class MongoDBService {
   private client: MongoClient;
   private db: Db;
   private collection: Collection<KnowledgeDocument>;
 
+  /**
+   * Creates a new MongoDBService instance.
+   * Initializes MongoDB client and collection using environment variables or defaults.
+   */
   constructor() {
     const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/';
     const databaseName = process.env.MONGODB_DATABASE || 'query-mind';
@@ -27,6 +35,12 @@ export class MongoDBService {
     this.collection = this.db.collection<KnowledgeDocument>(collectionName);
   }
 
+  /**
+   * Establishes a connection to the MongoDB database.
+   * 
+   * @returns A promise that resolves when the connection is established
+   * @throws Will throw an error if the connection fails
+   */
   async connect(): Promise<void> {
     try {
       await this.client.connect();
@@ -37,10 +51,28 @@ export class MongoDBService {
     }
   }
 
+  /**
+   * Closes the MongoDB connection.
+   * 
+   * @returns A promise that resolves when the connection is closed
+   */
   async disconnect(): Promise<void> {
     await this.client.close();
   }
 
+  /**
+   * Performs semantic search using cosine similarity on document embeddings.
+   * 
+   * @param queryEmbedding - The embedding vector of the query
+   * @param limit - Maximum number of results to return (default: 5)
+   * @param threshold - Minimum similarity score threshold (default: 0.7)
+   * @returns A promise that resolves to an array of knowledge documents sorted by similarity score
+   * @throws Will throw an error if the search operation fails
+   * 
+   * @remarks
+   * Uses MongoDB aggregation pipeline to calculate cosine similarity between query embedding
+   * and stored document embeddings. Only returns documents above the similarity threshold.
+   */
   async searchSimilar(queryEmbedding: number[], limit: number = 5, threshold: number = 0.7): Promise<KnowledgeDocument[]> {
     try {
       // Use MongoDB aggregation pipeline for cosine similarity search
@@ -123,6 +155,12 @@ export class MongoDBService {
     }
   }
 
+  /**
+   * Retrieves all documents from the knowledge base collection.
+   * 
+   * @returns A promise that resolves to an array of all knowledge documents
+   * @throws Will throw an error if the operation fails
+   */
   async getAllDocuments(): Promise<KnowledgeDocument[]> {
     try {
       return await this.collection.find({}).toArray();
@@ -132,6 +170,18 @@ export class MongoDBService {
     }
   }
 
+  /**
+   * Performs keyword search using MongoDB Atlas Search with BM25 algorithm.
+   * 
+   * @param query - The search query string
+   * @param limit - Maximum number of results to return (default: 5)
+   * @returns A promise that resolves to an array of knowledge documents sorted by relevance score
+   * @throws Will throw an error if the search operation fails
+   * 
+   * @remarks
+   * Requires MongoDB Atlas Search index named "chunk_text_atlas_search" to be configured.
+   * Searches in the "chunk_text" field of documents.
+   */
   async searchAtlas(query: string, limit: number = 5): Promise<KnowledgeDocument[]> {
     try {
       // Use MongoDB Atlas Search with BM25 algorithm
@@ -176,6 +226,12 @@ export class MongoDBService {
     }
   }
 
+  /**
+   * Gets the total count of documents in the knowledge base collection.
+   * 
+   * @returns A promise that resolves to the number of documents in the collection
+   * @throws Will throw an error if the operation fails
+   */
   async getDocumentCount(): Promise<number> {
     try {
       return await this.collection.countDocuments();
