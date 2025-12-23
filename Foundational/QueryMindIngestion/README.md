@@ -43,8 +43,9 @@ The tool uses environment variables for configuration. You can set these in your
 # PDF folder path (absolute or relative path)
 PDF_FOLDER_PATH=./pdfs
 
-# MongoDB configuration
-MONGODB_URI=mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/
+# MongoDB configuration (REQUIRED)
+# Replace with your actual MongoDB connection string
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
 MONGODB_DATABASE=query-mind
 MONGODB_COLLECTION=knowledge-base
 

@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     pdf_folder_path: str = Field(default="./pdfs", description="Path to folder containing PDF files")
     
     # MongoDB settings
-    mongodb_uri: str = Field(default="mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/", description="MongoDB connection URI")
+    mongodb_uri: str = Field(..., description="MongoDB connection URI (required, set via MONGODB_URI environment variable)")
     mongodb_database: str = Field(default="query-mind", description="MongoDB database name")
     mongodb_collection: str = Field(default="knowledge-base", description="MongoDB collection name")
     

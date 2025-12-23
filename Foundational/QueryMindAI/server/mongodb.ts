@@ -23,10 +23,14 @@ export class MongoDBService {
 
   /**
    * Creates a new MongoDBService instance.
-   * Initializes MongoDB client and collection using environment variables or defaults.
+   * Initializes MongoDB client and collection using environment variables.
+   * @throws Will throw an error if MONGODB_URI is not set
    */
   constructor() {
-    const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/';
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+      throw new Error('MONGODB_URI environment variable is required. Please set it in your .env file.');
+    }
     const databaseName = process.env.MONGODB_DATABASE || 'query-mind';
     const collectionName = process.env.MONGODB_COLLECTION || 'knowledge-base';
 

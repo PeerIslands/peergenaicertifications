@@ -32,10 +32,12 @@ This implementation adds RAG functionality to QueryMind AI using your existing M
 
 ## Configuration
 
-The system uses these environment variables (already configured):
+The system uses these environment variables (configure in your .env file):
 
 ```env
-MONGODB_URI=mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/
+# MongoDB configuration (REQUIRED)
+# Replace with your actual MongoDB connection string
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
 MONGODB_DATABASE=query-mind
 MONGODB_COLLECTION=knowledge-base
 OLLAMA_BASE_URL=http://localhost:11434

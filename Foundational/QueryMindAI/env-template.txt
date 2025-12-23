@@ -38,8 +38,9 @@ AZURE_OPENAI_MAX_TOKENS=500
 # =============================================================================
 # MONGODB CONFIGURATION
 # =============================================================================
-# MongoDB connection URI
-MONGODB_URI=mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/
+# MongoDB connection URI (REQUIRED)
+# Replace with your actual MongoDB connection string
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
 
 # MongoDB database name
 MONGODB_DATABASE=query-mind

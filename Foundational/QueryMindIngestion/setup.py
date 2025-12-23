@@ -59,13 +59,15 @@ def check_external_services():
     # Check MongoDB
     try:
         import pymongo
-        client = pymongo.MongoClient("mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/", serverSelectionTimeoutMS=2000)
+        from config import settings
+        client = pymongo.MongoClient(settings.mongodb_uri, serverSelectionTimeoutMS=2000)
         client.admin.command('ping')
-        print("✓ MongoDB Atlas connection successful")
+        print("✓ MongoDB connection successful")
         client.close()
-    except Exception:
-        print("✗ MongoDB Atlas connection failed")
-        print("  Please check your MongoDB Atlas connection string and network access")
+    except Exception as e:
+        print("✗ MongoDB connection failed")
+        print(f"  Error: {str(e)}")
+        print("  Please check your MONGODB_URI environment variable and network access")
     
     # Check Ollama
     try:
@@ -100,8 +102,9 @@ def create_sample_config():
 # PDF folder path (absolute or relative path)
 PDF_FOLDER_PATH=./pdfs
 
-# MongoDB configuration
-MONGODB_URI=mongodb+srv://mongosh_aj:ajinkya123@cluster0.clx9fur.mongodb.net/
+# MongoDB configuration (REQUIRED)
+# Replace with your actual MongoDB connection string
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
 MONGODB_DATABASE=query-mind
 MONGODB_COLLECTION=knowledge-base
 
