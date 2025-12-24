@@ -7,7 +7,7 @@
 The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is located in:
 
 ```
-📂 rag-app/
+📂 rag-app-foundational/
 ```
 
 **Built with:** LangChain • FAISS • Azure OpenAI (GPT-4o) • Flask • Deployed on Replit
@@ -23,7 +23,7 @@ The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is lo
 Research papers used for RAG ingestion are in:
 
 ```
-📂 pdfs for rag/
+📂 pdfs/
 ```
 
 ---
