@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PDF Ingestion Service
+  ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: querymindingestion
+    volumes:
+      - ./pdfs:/app/pdfs
+      - ./logs:/app/logs
+    environment:
+      # PDF Configuration
+      - PDF_FOLDER_PATH=${PDF_FOLDER_PATH:-/app/pdfs}
+      
+      # MongoDB Configuration
+      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-query-mind}
+      - MONGODB_COLLECTION=${MONGODB_COLLECTION:-knowledge-base}
+      
+      # Ollama Configuration
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-embeddinggemma}
+      
+      # Chunking Configuration
+      - CHUNK_SIZE=${CHUNK_SIZE:-1000}
+      - CHUNK_OVERLAP=${CHUNK_OVERLAP:-200}
+      
+      # Logging
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - ingestion-network
+
+  # Ollama Service for Embeddings
+  ollama:
+    image: ollama/ollama:latest
+    container_name: querymindingestion-ollama
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - ingestion-network
+    # Note: Run 'docker exec querymindingestion-ollama ollama pull embeddinggemma'
+    # after the container starts to download the embedding model
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  ingestion-network:
+    driver: bridge
+

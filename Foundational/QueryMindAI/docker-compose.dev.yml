@@ -1,0 +1,76 @@
+version: '3.8'
+
+# Development Docker Compose configuration
+# This file provides MongoDB, PostgreSQL, and Ollama services for local development
+# The app itself should be run with `npm run dev` outside of Docker for hot reload
+
+services:
+  # MongoDB service for development
+  mongodb:
+    image: mongo:7.0
+    container_name: querymindai-mongodb-dev
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=query-mind
+    volumes:
+      - mongodb_dev_data:/data/db
+      - mongodb_dev_config:/data/configdb
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - querymindai-dev-network
+
+  # PostgreSQL service for development
+  postgres:
+    image: postgres:16-alpine
+    container_name: querymindai-postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=querymind
+      - POSTGRES_PASSWORD=querymind123
+      - POSTGRES_DB=querymind_db
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U querymind -d querymind_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - querymindai-dev-network
+
+  # Ollama service for development
+  ollama:
+    image: ollama/ollama:latest
+    container_name: querymindai-ollama-dev
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_dev_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - querymindai-dev-network
+
+volumes:
+  mongodb_dev_data:
+    driver: local
+  mongodb_dev_config:
+    driver: local
+  postgres_dev_data:
+    driver: local
+  ollama_dev_data:
+    driver: local
+
+networks:
+  querymindai-dev-network:
+    driver: bridge
+

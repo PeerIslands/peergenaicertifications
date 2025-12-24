@@ -1,0 +1,10 @@
+langchain
+langchain-community
+langchain-experimental==0.3.5rc1
+pymongo==4.6.0
+PyPDF2==3.0.1
+python-dotenv==1.0.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+ollama==0.1.7
+requests==2.31.0

@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # Main application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: querymindai-app
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - HOST=0.0.0.0
+      # Azure OpenAI Configuration
+      - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      - AZURE_OPENAI_DEPLOYMENT_NAME=${AZURE_OPENAI_DEPLOYMENT_NAME:-gpt-4o-mini}
+      - AZURE_OPENAI_MODEL_NAME=${AZURE_OPENAI_MODEL_NAME:-gpt-4o-mini}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2024-07-18}
+      - AZURE_OPENAI_TEMPERATURE=${AZURE_OPENAI_TEMPERATURE:-0.5}
+      - AZURE_OPENAI_MAX_TOKENS=${AZURE_OPENAI_MAX_TOKENS:-500}
+      # MongoDB Configuration
+      - MONGODB_URI=mongodb://mongodb:27017/
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-query-mind}
+      - MONGODB_COLLECTION=${MONGODB_COLLECTION:-knowledge-base}
+      # PostgreSQL Configuration
+      - DATABASE_URL=postgresql://querymind:querymind123@postgres:5432/querymind_db
+      # Ollama Configuration
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # Session Configuration
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-in-production}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - querymindai-network
+
+  # MongoDB service
+  mongodb:
+    image: mongo:7.0
+    container_name: querymindai-mongodb
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=${MONGODB_DATABASE:-query-mind}
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - querymindai-network
+
+  # PostgreSQL service for Drizzle ORM
+  postgres:
+    image: postgres:16-alpine
+    container_name: querymindai-postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=querymind
+      - POSTGRES_PASSWORD=querymind123
+      - POSTGRES_DB=querymind_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U querymind -d querymind_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - querymindai-network
+
+  # Ollama service for embeddings
+  ollama:
+    image: ollama/ollama:latest
+    container_name: querymindai-ollama
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Pull the embedding model on first start
+    # This can take some time, so it's done as a separate step
+    restart: unless-stopped
+    networks:
+      - querymindai-network
+    # Note: You may want to run `docker exec querymindai-ollama ollama pull embeddinggemma`
+    # after the container starts to download the embedding model
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  postgres_data:
+    driver: local
+  ollama_data:
+    driver: local
+
+networks:
+  querymindai-network:
+    driver: bridge
+
