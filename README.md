@@ -21,7 +21,7 @@ The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is lo
 Research papers used for RAG ingestion are in:
 
 ```
-📂 pdfs for rag/
+📂 pdfs/
 ```
 
 ---
