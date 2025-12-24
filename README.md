@@ -7,12 +7,12 @@
 The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is located in:
 
 ```
-📂 rag-app/
+📂 rag-app-foundational/
 ```
 
 **Built with:** LangChain • FAISS • Azure OpenAI (GPT-4o) • Flask • Deployed on Replit
 
-➡️ See [`rag-app/README.md`](rag-app/README.md) for full documentation.
+➡️ See [`rag-app-foundational/README.md`](rag-app-foundational/README.md) for full documentation.
 
 ---
 
