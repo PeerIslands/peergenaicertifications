@@ -14,7 +14,7 @@ The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is lo
 
 🎬 **[Watch Demo Video](https://peerislandsio.sharepoint.com/:v:/s/Certifications/IQDWrMthLPvpRIEiGYZCjb98AVURbhumT-LQrCIfsTuwre0?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=yhyUyz)**
 
-➡️ See [`rag-app/README.md`](rag-app/README.md) for full documentation.
+➡️ See [`rag-app-foundational/README.md`](rag-app-foundational/README.md) for full documentation.
 
 ---
 
