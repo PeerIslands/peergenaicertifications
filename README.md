@@ -2,17 +2,19 @@
 
 ## 📁 Projects
 
-### 🔍 RAG Document Explorer
+### 🔍 RAG Document Explorer — Foundational
 
 The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is located in:
 
 ```
-📂 rag-app-foundational/
+📂 rag-app/
 ```
 
 **Built with:** LangChain • FAISS • Azure OpenAI (GPT-4o) • Flask • Deployed on Replit
 
-➡️ See [`rag-app-foundational/README.md`](rag-app-foundational/README.md) for full documentation.
+🎬 **[Watch Demo Video](https://peerislandsio.sharepoint.com/:v:/s/Certifications/IQDWrMthLPvpRIEiGYZCjb98AVURbhumT-LQrCIfsTuwre0?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=yhyUyz)**
+
+➡️ See [`rag-app/README.md`](rag-app/README.md) for full documentation.
 
 ---
 
@@ -21,7 +23,7 @@ The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is lo
 Research papers used for RAG ingestion are in:
 
 ```
-📂 pdfs/
+📂 pdfs for rag/
 ```
 
 ---
