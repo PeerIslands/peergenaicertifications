@@ -1,0 +1,26 @@
+# FastAPI and Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+
+# Validation and Data Models
+pydantic==2.5.0
+pydantic[email]==2.5.0
+pydantic-settings==2.1.0
+email-validator==2.1.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2
+
+# Environment Configuration
+python-dotenv==1.0.0
+
+# Database Driver (SQLite included, PostgreSQL optional)
+# psycopg2-binary==2.9.9  # Uncomment for PostgreSQL
+
