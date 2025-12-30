@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LangGraph Chatbot - Enhanced POC</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>🤖 LangGraph Chatbot</h1>
+                <p class="subtitle">Intelligent AI-powered routing with multiple tools</p>
+            </div>
+            <div class="header-actions">
+                <button id="exportBtn" class="btn-icon" title="Export Conversation">
+                    📥 Export
+                </button>
+                <button id="themeToggle" class="btn-icon" title="Toggle Theme">
+                    🌙
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="chat-section">
+                <div class="chat-header">
+                    <h3>💬 Conversation</h3>
+                    <div class="chat-stats">
+                        <span id="messageCount">0 messages</span>
+                    </div>
+                </div>
+                
+                <div class="chat-container" id="chatContainer">
+                    <div class="welcome-message">
+                        <h2>Welcome! 👋</h2>
+                        <p>I'm an intelligent chatbot powered by LangGraph. I can help you with:</p>
+                        <div class="tools-grid">
+                            <div class="tool-card">
+                                <div class="tool-icon">🔢</div>
+                                <div class="tool-name">Calculator</div>
+                                <div class="tool-desc">Math calculations</div>
+                            </div>
+                            <div class="tool-card">
+                                <div class="tool-icon">🌤️</div>
+                                <div class="tool-name">Weather</div>
+                                <div class="tool-desc">Weather forecasts</div>
+                            </div>
+                            <div class="tool-card">
+                                <div class="tool-icon">🕐</div>
+                                <div class="tool-name">Time & Date</div>
+                                <div class="tool-desc">Current time/date</div>
+                            </div>
+                            <div class="tool-card">
+                                <div class="tool-icon">📏</div>
+                                <div class="tool-name">Unit Converter</div>
+                                <div class="tool-desc">Unit conversions</div>
+                            </div>
+                            <div class="tool-card">
+                                <div class="tool-icon">📚</div>
+                                <div class="tool-name">Wikipedia</div>
+                                <div class="tool-desc">Search Wikipedia</div>
+                            </div>
+                            <div class="tool-card">
+                                <div class="tool-icon">🌐</div>
+                                <div class="tool-name">Translation</div>
+                                <div class="tool-desc">Language translation</div>
+                            </div>
+                        </div>
+                        <p class="welcome-note">💡 I'll automatically route your query to the right tool or LLM!</p>
+                    </div>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-container">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="messageInput" 
+                                placeholder="Ask me anything... (e.g., 'calculate 25 * 4', 'weather in London', 'what time is it', 'convert 100 km to miles', 'wikipedia artificial intelligence')"
+                                rows="2"
+                            ></textarea>
+                            <button id="sendBtn" class="btn btn-primary btn-send">
+                                <span class="btn-text">Send</span>
+                                <span class="btn-loader" style="display: none;">
+                                    <span class="spinner"></span> Processing...
+                                </span>
+                            </button>
+                        </div>
+                        <div class="button-group">
+                            <button id="clearBtn" class="btn btn-secondary">🗑️ Clear</button>
+                            <button id="examplesBtn" class="btn btn-secondary">💡 Examples</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-card">
+                    <h3>📊 Response Source</h3>
+                    <div id="sourceInfo" class="source-info">
+                        <p class="placeholder">Source information will appear here</p>
+                    </div>
+                </div>
+                
+                <div class="info-card">
+                    <h3>🛠️ Available Tools</h3>
+                    <div class="tools-list">
+                        <div class="tool-item">
+                            <span class="tool-badge calculator">🔢</span>
+                            <span>Calculator</span>
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-badge weather">🌤️</span>
+                            <span>Weather</span>
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-badge time">🕐</span>
+                            <span>Time & Date</span>
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-badge converter">📏</span>
+                            <span>Unit Converter</span>
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-badge wikipedia">📚</span>
+                            <span>Wikipedia</span>
+                        </div>
+                        <div class="tool-item">
+                            <span class="tool-badge translation">🌐</span>
+                            <span>Translation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <p>Status: <strong id="statusIndicator">● Ready</strong></p>
+                <p class="footer-info">Powered by LangGraph & Azure OpenAI</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Examples Modal -->
+    <div id="examplesModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>💡 Example Queries</h2>
+            <div class="examples-list">
+                <div class="example-category">
+                    <h3>🔢 Calculator</h3>
+                    <div class="example-item" data-example="calculate 25 * 4 + 10">calculate 25 * 4 + 10</div>
+                    <div class="example-item" data-example="what is 100 / 5">what is 100 / 5</div>
+                    <div class="example-item" data-example="compute 22412435 % 343 - 2">compute 22412435 % 343 - 2</div>
+                </div>
+                <div class="example-category">
+                    <h3>🌤️ Weather</h3>
+                    <div class="example-item" data-example="what's the weather in New York">what's the weather in New York</div>
+                    <div class="example-item" data-example="temperature in London">temperature in London</div>
+                    <div class="example-item" data-example="weather in andhra pradesh">weather in andhra pradesh</div>
+                </div>
+                <div class="example-category">
+                    <h3>🕐 Time & Date</h3>
+                    <div class="example-item" data-example="what time is it">what time is it</div>
+                    <div class="example-item" data-example="current date">current date</div>
+                    <div class="example-item" data-example="what day is it">what day is it</div>
+                </div>
+                <div class="example-category">
+                    <h3>📏 Unit Converter</h3>
+                    <div class="example-item" data-example="convert 100 km to miles">convert 100 km to miles</div>
+                    <div class="example-item" data-example="50 celsius to fahrenheit">50 celsius to fahrenheit</div>
+                    <div class="example-item" data-example="10 kg to pounds">10 kg to pounds</div>
+                </div>
+                <div class="example-category">
+                    <h3>📚 Wikipedia</h3>
+                    <div class="example-item" data-example="wikipedia artificial intelligence">wikipedia artificial intelligence</div>
+                    <div class="example-item" data-example="search wikipedia for python">search wikipedia for python</div>
+                </div>
+                <div class="example-category">
+                    <h3>🌐 Translation</h3>
+                    <div class="example-item" data-example="translate hello to spanish">translate hello to spanish</div>
+                    <div class="example-item" data-example="translate bonjour to english">translate bonjour to english</div>
+                </div>
+                <div class="example-category">
+                    <h3>💬 General Questions (LLM)</h3>
+                    <div class="example-item" data-example="what is machine learning">what is machine learning</div>
+                    <div class="example-item" data-example="explain quantum computing">explain quantum computing</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
