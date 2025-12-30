@@ -1,0 +1,28 @@
+# MCP MongoDB Search Solution Requirements
+
+# Core dependencies
+pymongo>=4.6.0
+python-dotenv>=1.0.0
+
+# Web framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# AI Model Integration (Azure OpenAI)
+openai>=1.0.0  # Supports both OpenAI and Azure OpenAI
+
+# MCP Protocol support
+# Note: MongoDB MCP server is installed via npm: npm install -g @modelcontextprotocol/server-mongodb
+
+# Natural Language Processing (optional, for advanced query parsing)
+# nltk>=3.8.1
+# spacy>=3.7.0
+
+# Utilities
+requests>=2.31.0
+
+# Development dependencies (optional)
+# pytest>=7.4.0
+# black>=23.0.0
+# flake8>=6.0.0
+

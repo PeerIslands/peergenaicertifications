@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP MongoDB Search - Natural Language Query Interface</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 MCP MongoDB Search</h1>
+            <p class="subtitle">Query your MongoDB database using natural language</p>
+        </header>
+
+        <div class="main-content">
+            <div class="query-section">
+                <div class="query-input-container">
+                    <textarea 
+                        id="queryInput" 
+                        placeholder="Enter your natural language query here...&#10;&#10;Examples:&#10;• find all users where age is greater than 25&#10;• get products from products collection where price is less than 100&#10;• show first 5 documents from orders collection"
+                        rows="6"
+                    ></textarea>
+                    <div class="button-group">
+                        <button id="submitBtn" class="btn btn-primary">
+                            <span class="btn-text">Execute Query</span>
+                            <span class="btn-loader" style="display: none;">⏳ Processing...</span>
+                        </button>
+                        <button id="clearBtn" class="btn btn-secondary">Clear</button>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <h3>💡 Example Queries</h3>
+                    <div id="examplesContainer" class="examples-grid">
+                        <!-- Examples will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <div id="resultsContainer" class="results-container">
+                    <div class="welcome-message">
+                        <h2>Welcome! 👋</h2>
+                        <p>Enter a natural language query above to search your MongoDB database.</p>
+                        <p>Try clicking on one of the example queries to get started.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Database: <strong id="databaseName">Loading...</strong></p>
+            <p class="status" id="statusIndicator">● Ready</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
+
