@@ -16,7 +16,8 @@ The complete codebase for the **RAG (Retrieval-Augmented Generation) SPA** is lo
 
 **Built with:** LangChain • FAISS • Azure OpenAI (GPT-4o) • Flask • Deployed on Replit
 
-🎬 **[Watch Demo Video](https://peerislandsio.sharepoint.com/:v:/s/Certifications/IQDWrMthLPvpRIEiGYZCjb98AVURbhumT-LQrCIfsTuwre0?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=yhyUyz)**
+🎬 **[Watch Demo Video - Foundational Level](https://peerislandsio.sharepoint.com/:v:/s/Certifications/IQDWrMthLPvpRIEiGYZCjb98AVURbhumT-LQrCIfsTuwre0?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=yhyUyz)**
+
 
 ➡️ See [`rag-app-foundational/README.md`](rag-app-foundational/README.md) for full documentation.
 
@@ -64,6 +65,8 @@ The **advanced-level** folder contains four sophisticated AI-powered solutions:
 - ✅ Web-based search interface
 
 ➡️ **See [`advanced-level/README.md`](advanced-level/README.md) for comprehensive documentation of all advanced projects.**
+
+🎬 **[Watch Demo Video - Advanced Level](https://peerislandsio.sharepoint.com/:v:/s/Certifications/IQB3L_XVJoN6RaGLkP0UlH27AQlv63bHidR18NJzpgBpg7o?e=otJuRa)**
 
 ---
 
